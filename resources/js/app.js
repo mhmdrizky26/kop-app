@@ -16,7 +16,7 @@ Alpine.data('isianRupiah', (awal = '') => ({
     },
 }));
 
-// Pencarian anggota: ketik nama atau nomor, lalu pilih dari daftar.
+// Pencarian anggota: ketik nama atau ID anggota, lalu pilih dari daftar.
 Alpine.data('pilihAnggota', (daftar = [], terpilih = null) => ({
     daftar,
     buka: false,
@@ -29,12 +29,12 @@ Alpine.data('pilihAnggota', (daftar = [], terpilih = null) => ({
     get hasil() {
         const k = this.cari.trim().toLowerCase();
         if (!k || this.terpilih) return this.daftar;
-        return this.daftar.filter((a) => a.nama.toLowerCase().includes(k) || String(a.nomor) === k);
+        return this.daftar.filter((a) => a.nama.toLowerCase().includes(k) || a.kode.toLowerCase().includes(k));
     },
     pilih(a) {
         if (!a) return;
         this.terpilih = a;
-        this.cari = `${a.nomor} · ${a.nama}`;
+        this.cari = `${a.kode} · ${a.nama}`;
         this.buka = false;
         this.$dispatch('anggota', a.id);
     },

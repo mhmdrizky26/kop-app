@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Anggota extends Model
 {
+    /** Awalan ID anggota, singkatan Koperasi Guru Bahagia. */
+    public const AWALAN_ID = 'KGB';
+
     protected $table = 'anggota';
 
     protected $fillable = [
@@ -42,6 +45,31 @@ class Anggota extends Model
     public function scopeAktif($query)
     {
         return $query->where('status', 'aktif');
+    }
+
+    /** ID anggota yang dipakai di semua tampilan dan untuk login, misalnya "KGB001". */
+    public function getKodeAttribute(): string
+    {
+        return static::kodeDariNomor($this->nomor);
+    }
+
+    public static function kodeDariNomor(int $nomor): string
+    {
+        return static::AWALAN_ID.str_pad((string) $nomor, 3, '0', STR_PAD_LEFT);
+    }
+
+    /** Mengubah ketikan seperti "kgb005", "KGB-005", atau "5" menjadi nomor urut 5. */
+    public static function nomorDariKode(string $kode): ?int
+    {
+        $angka = preg_replace('/^'.static::AWALAN_ID.'/i', '', preg_replace('/[^A-Za-z0-9]/', '', trim($kode)));
+
+        return ctype_digit($angka) ? (int) $angka : null;
+    }
+
+    /** Nomor urut berikutnya untuk anggota baru. */
+    public static function nomorBerikutnya(): int
+    {
+        return (int) static::max('nomor') + 1;
     }
 
     public function getInisialAttribute(): string

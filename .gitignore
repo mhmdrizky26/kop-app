@@ -25,3 +25,17 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Lingkungan lokal tambahan
+.env.*.local
+/.fleet
+/.history
+ngrok.yml
+
+# Konfigurasi AI / Claude Code / Laravel Boost (khusus komputer pengembang)
+/.claude
+/.mcp.json
+/boost.json
+/CLAUDE.md
+/AGENTS.md
+/.ai

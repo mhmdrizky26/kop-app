@@ -16,14 +16,14 @@
 
     <div class="card mt-6">
         <div class="card-head">
-            <div class="flex gap-1 rounded-xl bg-slate-100 p-1">
+            <div class="flex w-full gap-1 rounded-xl bg-slate-100 p-1 *:flex-1 *:text-center sm:w-auto sm:*:flex-none">
                 @foreach (['aktif' => 'Aktif', 'lunas' => 'Lunas', 'semua' => 'Semua'] as $kunci => $label)
                     <a href="{{ route('pinjaman.index', ['status' => $kunci]) }}" @class(['tab', 'tab-on' => $status === $kunci])>{{ $label }}</a>
                 @endforeach
             </div>
         </div>
         <div class="overflow-x-auto">
-            <table class="tbl">
+            <table class="tbl tbl-stack">
                 <thead>
                     <tr>
                         <th>Anggota</th>
@@ -43,18 +43,18 @@
                                 <a href="{{ route('pinjaman.show', $p) }}" class="font-medium text-slate-900 hover:text-blue-700">{{ $p->anggota->nama }}</a>
                                 <p class="text-xs text-slate-500">{{ $p->tenor }} kali angsuran</p>
                             </td>
-                            <td class="whitespace-nowrap text-slate-500">{{ $p->tanggal->translatedFormat('j M Y') }}</td>
-                            <td class="num">{{ rupiah($p->pokok, false) }}</td>
-                            <td class="num">{{ angka($p->status === 'aktif' ? $p->tagihan_angsuran : 0) }}</td>
-                            <td class="num">{{ angka($p->tagihan_jasa) }}</td>
-                            <td class="num font-semibold text-slate-900">{{ $p->status === 'lunas' ? 'Lunas' : rupiah($p->sisa, false) }}</td>
-                            <td>
-                                <div class="flex items-center gap-2">
+                            <td class="whitespace-nowrap text-slate-500" data-label="Tanggal pinjam">{{ $p->tanggal->translatedFormat('j M Y') }}</td>
+                            <td class="num" data-label="Pinjaman">{{ rupiah($p->pokok, false) }}</td>
+                            <td class="num" data-label="Angsuran / bulan">{{ angka($p->status === 'aktif' ? $p->tagihan_angsuran : 0) }}</td>
+                            <td class="num" data-label="Jasa / bulan">{{ angka($p->tagihan_jasa) }}</td>
+                            <td class="num font-semibold text-slate-900" data-label="Sisa">{{ $p->status === 'lunas' ? 'Lunas' : rupiah($p->sisa, false) }}</td>
+                            <td data-label="Terbayar">
+                                <div class="flex w-1/2 items-center gap-2 md:w-auto">
                                     <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full bg-blue-600" style="width: {{ $p->persen_lunas }}%"></div></div>
                                     <span class="w-9 text-right text-xs text-slate-500 tabular-nums">{{ $p->persen_lunas }}%</span>
                                 </div>
                             </td>
-                            <td class="text-right"><a href="{{ route('pinjaman.show', $p) }}" class="btn btn-sm btn-ghost">Rincian</a></td>
+                            <td class="text-right max-md:pt-2"><a href="{{ route('pinjaman.show', $p) }}" class="btn btn-sm btn-ghost max-md:w-full">Rincian</a></td>
                         </tr>
                     @empty
                         <tr><td colspan="8" class="py-12 text-center text-slate-500">Tidak ada pinjaman pada kelompok ini.</td></tr>

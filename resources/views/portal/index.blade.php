@@ -3,11 +3,11 @@
 @section('judul', 'Buku Tabungan Saya')
 
 @section('isi')
-    <div class="flex flex-wrap items-center gap-4">
-        <span class="flex size-12 items-center justify-center rounded-full bg-blue-600 text-base font-semibold text-white">{{ $anggota->inisial }}</span>
-        <div>
-            <h1 class="text-xl font-semibold tracking-tight text-slate-900">Halo, {{ $anggota->nama }}</h1>
-            <p class="text-sm text-slate-500">No. anggota {{ $anggota->nomor }} · Tahun buku {{ $tahun->nama }}</p>
+    <div class="flex items-center gap-4">
+        <span class="flex size-12 shrink-0 items-center justify-center rounded-full bg-blue-600 text-base font-semibold text-white">{{ $anggota->inisial }}</span>
+        <div class="min-w-0">
+            <h1 class="text-lg font-semibold tracking-tight break-words text-slate-900 sm:text-xl">Halo, {{ $anggota->nama }}</h1>
+            <p class="text-sm text-slate-500">ID anggota {{ $anggota->kode }} · Tahun buku {{ $tahun->nama }}</p>
         </div>
     </div>
 
@@ -18,7 +18,7 @@
     <div class="mt-6 grid gap-6 lg:grid-cols-2">
         {{-- Tagihan bulan ini --}}
         <div class="card p-5">
-            <div class="flex items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
                 <h2 class="card-title">Tagihan {{ $periode->translatedFormat('F Y') }}</h2>
                 @if ($bayar)
                     <span class="badge badge-green"><x-icon name="check" class="size-3" /> Sudah dibayar {{ $bayar['tanggal']->translatedFormat('j M') }}</span>
@@ -72,11 +72,11 @@
         <div class="card-head"><h2 class="card-title">Transaksi terakhir</h2></div>
         @forelse ($transaksi as $t)
             <div class="flex items-center justify-between gap-3 border-t border-slate-100 px-5 py-3 text-sm first:border-t-0">
-                <div>
+                <div class="min-w-0">
                     <p class="font-medium text-slate-900">{{ $t->label }}</p>
                     <p class="text-xs text-slate-500">{{ $t->tanggal->translatedFormat('j M Y') }}{{ $t->label_metode ? ' · '.$t->label_metode : '' }}{{ $t->keterangan ? ' · '.$t->keterangan : '' }}</p>
                 </div>
-                <span @class(['font-medium tabular-nums', 'text-slate-900' => $t->arah === 'masuk', 'text-slate-500' => $t->arah === 'keluar'])>{{ $t->arah === 'keluar' ? '−' : '+' }}{{ rupiah($t->jumlah, false) }}</span>
+                <span @class(['shrink-0 font-medium whitespace-nowrap tabular-nums', 'text-slate-900' => $t->arah === 'masuk', 'text-slate-500' => $t->arah === 'keluar'])>{{ $t->arah === 'keluar' ? '−' : '+' }}{{ rupiah($t->jumlah, false) }}</span>
             </div>
         @empty
             <p class="px-5 py-10 text-center text-sm text-slate-500">Belum ada transaksi.</p>

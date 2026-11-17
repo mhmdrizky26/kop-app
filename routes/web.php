@@ -19,6 +19,8 @@ Route::get('/', fn () => redirect()->route(
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'form'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1');
+    Route::get('/login/pengurus', [AuthController::class, 'formPengurus'])->name('login.pengurus');
+    Route::post('/login/pengurus', [AuthController::class, 'loginPengurus'])->middleware('throttle:6,1');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
@@ -50,7 +52,6 @@ Route::middleware(['auth', 'peran:pengurus'])->group(function () {
     Route::get('/anggota/{anggota}', [AnggotaController::class, 'show'])->name('anggota.show');
     Route::get('/anggota/{anggota}/ubah', [AnggotaController::class, 'edit'])->name('anggota.edit');
     Route::put('/anggota/{anggota}', [AnggotaController::class, 'update'])->name('anggota.update');
-    Route::post('/anggota/{anggota}/reset-pin', [AnggotaController::class, 'resetPin'])->name('anggota.reset-pin');
 
     Route::get('/kas', [KasController::class, 'index'])->name('kas.index');
     Route::post('/kas', [KasController::class, 'store'])->name('kas.store');
@@ -67,6 +68,4 @@ Route::middleware(['auth', 'peran:pengurus'])->group(function () {
 // ---------------------------------------------------------------- Halaman anggota (hanya melihat data sendiri)
 Route::middleware(['auth', 'peran:anggota'])->group(function () {
     Route::get('/saya', [PortalController::class, 'index'])->name('portal');
-    Route::get('/saya/pin', [PortalController::class, 'pin'])->name('portal.pin');
-    Route::put('/saya/pin', [PortalController::class, 'ubahPin'])->name('portal.pin.update');
 });

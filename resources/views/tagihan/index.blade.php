@@ -19,15 +19,15 @@
         <div class="grid gap-5 sm:grid-cols-3">
             <div>
                 <p class="text-sm text-slate-500">Sudah bayar</p>
-                <p class="mt-1 text-2xl font-semibold tracking-tight text-slate-900 tabular-nums">{{ $jumlahLunas }} <span class="text-sm font-normal text-slate-500">dari {{ $jumlahAnggota }} anggota</span></p>
+                <p class="mt-1 text-xl font-semibold tracking-tight sm:text-2xl text-slate-900 tabular-nums">{{ $jumlahLunas }} <span class="text-sm font-normal text-slate-500">dari {{ $jumlahAnggota }} anggota</span></p>
             </div>
             <div>
                 <p class="text-sm text-slate-500">Sudah terkumpul</p>
-                <p class="mt-1 text-2xl font-semibold tracking-tight text-slate-900 tabular-nums">{{ rupiah($terkumpul) }}</p>
+                <p class="mt-1 text-xl font-semibold tracking-tight sm:text-2xl text-slate-900 tabular-nums">{{ rupiah($terkumpul) }}</p>
             </div>
             <div>
                 <p class="text-sm text-slate-500">Belum dibayar</p>
-                <p class="mt-1 text-2xl font-semibold tracking-tight text-slate-900 tabular-nums">{{ rupiah($sisaTagihan) }}</p>
+                <p class="mt-1 text-xl font-semibold tracking-tight sm:text-2xl text-slate-900 tabular-nums">{{ rupiah($sisaTagihan) }}</p>
             </div>
         </div>
         <div class="mt-4 h-2 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-valuenow="{{ $persen }}" aria-valuemin="0" aria-valuemax="100">
@@ -43,31 +43,31 @@
             },
         }">
         <div class="card-head">
-            <div class="flex flex-wrap items-center gap-3">
-                <div class="flex gap-1 rounded-xl bg-slate-100 p-1">
+            <div class="flex w-full flex-wrap items-center gap-3 sm:w-auto">
+                <div class="flex w-full gap-1 rounded-xl bg-slate-100 p-1 *:flex-1 *:text-center sm:w-auto sm:*:flex-none">
                     <button type="button" class="tab" :class="saring === 'belum' && 'tab-on'" @click="saring = 'belum'">Belum bayar <span class="text-slate-400">{{ $jumlahAnggota - $jumlahLunas }}</span></button>
                     <button type="button" class="tab" :class="saring === 'sudah' && 'tab-on'" @click="saring = 'sudah'">Sudah bayar <span class="text-slate-400">{{ $jumlahLunas }}</span></button>
                     <button type="button" class="tab" :class="saring === 'semua' && 'tab-on'" @click="saring = 'semua'">Semua</button>
                 </div>
-                <div class="relative">
+                <div class="relative w-full sm:w-auto">
                     <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400"><x-icon name="search" class="size-4" /></span>
-                    <input type="search" x-model="cari" class="input w-52 pl-9" placeholder="Cari nama" aria-label="Cari nama anggota">
+                    <input type="search" x-model="cari" class="input w-full pl-9 sm:w-52" placeholder="Cari nama" aria-label="Cari nama anggota">
                 </div>
             </div>
 
             @if ($belumPotongGaji > 0)
-                <form method="POST" action="{{ route('tagihan.bayar-semua') }}"
+                <form method="POST" action="{{ route('tagihan.bayar-semua') }}" class="w-full sm:w-auto"
                     onsubmit="return confirm('Tandai {{ $belumPotongGaji }} anggota potong gaji sudah bayar untuk {{ $periode->translatedFormat('F Y') }}?')">
                     @csrf
                     <input type="hidden" name="bulan" value="{{ $bulan }}">
                     <input type="hidden" name="kelompok" value="potong_gaji">
-                    <button class="btn btn-primary"><x-icon name="check" class="size-4" /> Tandai semua potong gaji ({{ $belumPotongGaji }})</button>
+                    <button class="btn btn-primary w-full whitespace-normal sm:w-auto"><x-icon name="check" class="size-4" /> Tandai semua potong gaji ({{ $belumPotongGaji }})</button>
                 </form>
             @endif
         </div>
 
         <div class="overflow-x-auto">
-            <table class="tbl">
+            <table class="tbl tbl-stack">
                 <thead>
                     <tr>
                         <th>Anggota</th>
@@ -92,17 +92,17 @@
                                     <span class="avatar">{{ $a->inisial }}</span>
                                     <div class="min-w-0">
                                         <a href="{{ route('anggota.show', $a) }}" class="block truncate font-medium text-slate-900 hover:text-blue-700">{{ $a->nama }}</a>
-                                        <span class="text-xs text-slate-500">No. {{ $a->nomor }} · {{ $a->potong_gaji ? 'Potong gaji' : 'Setor langsung' }}</span>
+                                        <span class="text-xs text-slate-500">{{ $a->kode }} · {{ $a->potong_gaji ? 'Potong gaji' : 'Setor langsung' }}</span>
                                     </div>
                                 </div>
                             </td>
-                            <td class="num">{{ angka($nilai['wajib']) }}</td>
-                            <td class="num">{{ angka($nilai['manasuka']) }}</td>
-                            <td class="num">{{ angka($nilai['angsuran']) }}</td>
-                            <td class="num">{{ angka($nilai['jasa']) }}</td>
-                            <td class="num font-semibold text-slate-900">{{ rupiah($nilai['total'], false) }}</td>
-                            <td>
-                                <div class="flex items-center justify-end gap-2">
+                            <td class="num" data-label="Simpanan wajib">{{ angka($nilai['wajib']) }}</td>
+                            <td class="num" data-label="Manasuka">{{ angka($nilai['manasuka']) }}</td>
+                            <td class="num" data-label="Angsuran">{{ angka($nilai['angsuran']) }}</td>
+                            <td class="num" data-label="Jasa">{{ angka($nilai['jasa']) }}</td>
+                            <td class="num font-semibold text-slate-900" data-label="Total">{{ rupiah($nilai['total'], false) }}</td>
+                            <td class="max-md:pt-2">
+                                <div class="flex flex-wrap items-center justify-end gap-2">
                                     @if ($b['lunas'])
                                         <span class="badge badge-green"><x-icon name="check" class="size-3" /> {{ $b['bayar']['tanggal']->translatedFormat('j M') }}</span>
                                         <form method="POST" action="{{ route('tagihan.batal') }}" onsubmit="return confirm(@js('Batalkan pembayaran '.$a->nama.'?'))">
@@ -169,8 +169,8 @@
                                                 </select>
                                             </div>
                                         </div>
-                                        <div class="mt-4 flex gap-2">
-                                            <button class="btn btn-primary">Simpan pembayaran</button>
+                                        <div class="mt-4 flex flex-wrap gap-2">
+                                            <button class="btn btn-primary max-sm:flex-1">Simpan pembayaran</button>
                                             <button type="button" class="btn btn-ghost" @click="buka = null">Tutup</button>
                                         </div>
                                     </form>

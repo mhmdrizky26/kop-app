@@ -11,10 +11,11 @@ use App\Models\User;
 use App\Services\Keuangan;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 /**
  * Data contoh untuk demo. Semua nama dan angka fiktif.
- * Login pengurus: bendahara / password. Login anggota: nomor anggota / PIN 123456.
+ * Login pengurus: bendahara / password. Login anggota: ID anggota, misalnya KGB001.
  */
 class DatabaseSeeder extends Seeder
 {
@@ -53,7 +54,10 @@ class DatabaseSeeder extends Seeder
                 'potong_gaji' => $i % 5 < 3,
                 'setoran_manasuka' => [0, 0, 50000, 100000, 100000, 200000, 250000, 500000][mt_rand(0, 7)],
             ]);
-            User::create(['name' => $nama, 'username' => (string) $a->nomor, 'password' => '123456', 'role' => 'anggota', 'anggota_id' => $a->id]);
+            User::create([
+                'name' => $nama, 'username' => $a->kode,
+                'password' => Str::random(40), 'role' => 'anggota', 'anggota_id' => $a->id,
+            ]);
 
             $this->catat($a, $awal, 'simpanan_pokok', 5000, 'saldo_awal', 'Saldo awal tahun buku');
             $this->catat($a, $awal, 'simpanan_wajib', mt_rand(20, 190) * 100000, 'saldo_awal', 'Saldo awal tahun buku');

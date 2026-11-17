@@ -24,25 +24,46 @@ class AplikasiTest extends TestCase
 
     private function akunAnggota(int $nomor): User
     {
-        return User::where('username', (string) $nomor)->firstOrFail();
+        return Anggota::where('nomor', $nomor)->firstOrFail()->user;
     }
 
     public function test_tamu_diarahkan_ke_halaman_masuk(): void
     {
         $this->get('/')->assertRedirect('/login');
         $this->get('/beranda')->assertRedirect('/login');
-        $this->get('/login')->assertOk()->assertSee('Masuk');
+        $this->get('/login')->assertOk()->assertSee('ID anggota');
+        $this->get('/login/pengurus')->assertOk()->assertSee('Kata sandi');
     }
 
-    public function test_login_pengurus_dan_anggota(): void
+    public function test_login_pengurus_dengan_username_dan_password(): void
     {
-        $this->post('/login', ['username' => 'bendahara', 'password' => 'password'])->assertRedirect('/beranda');
+        $this->post('/login/pengurus', ['username' => 'bendahara', 'password' => 'password'])->assertRedirect('/beranda');
         $this->post('/logout')->assertRedirect('/login');
 
-        $this->post('/login', ['username' => '3', 'password' => '123456'])->assertRedirect('/saya');
+        $this->post('/login/pengurus', ['username' => 'bendahara', 'password' => 'salah'])->assertSessionHasErrors('username');
+        $this->assertGuest();
+    }
+
+    public function test_login_anggota_cukup_dengan_id(): void
+    {
+        $akun = $this->akunAnggota(3);
+        $ketikan = ' kgb-003 ';
+
+        $this->post('/login', ['id_anggota' => $ketikan])->assertRedirect('/saya');
+        $this->assertAuthenticatedAs($akun);
         $this->post('/logout');
 
-        $this->post('/login', ['username' => '3', 'password' => 'salah'])->assertSessionHasErrors('username');
+        $this->post('/login', ['id_anggota' => 'TIDAKADA'])->assertSessionHasErrors('id_anggota');
+        $this->assertGuest();
+    }
+
+    public function test_akun_anggota_tidak_bisa_masuk_lewat_form_pengurus_dan_sebaliknya(): void
+    {
+        $akun = $this->akunAnggota(3);
+        $akun->update(['password' => 'rahasia']);
+
+        $this->post('/login/pengurus', ['username' => $akun->username, 'password' => 'rahasia'])->assertSessionHasErrors('username');
+        $this->post('/login', ['id_anggota' => 'bendahara'])->assertSessionHasErrors('id_anggota');
         $this->assertGuest();
     }
 
@@ -71,7 +92,6 @@ class AplikasiTest extends TestCase
         $lain = Anggota::where('nomor', 5)->first();
 
         $this->get('/saya')->assertOk()->assertSee(Anggota::where('nomor', 2)->value('nama'))->assertDontSee($lain->nama);
-        $this->get('/saya/pin')->assertOk();
 
         // Halaman pengurus dan data anggota lain tidak bisa dibuka.
         foreach (['/beranda', '/anggota', '/anggota/'.$lain->id, '/tagihan', '/laporan/shu', '/pengaturan'] as $url) {
@@ -175,20 +195,23 @@ class AplikasiTest extends TestCase
         $this->assertSame(33.0, TahunBuku::aktif()->shu_jasa_simpanan);
     }
 
-    public function test_anggota_baru_mendapat_akun_dan_simpanan_pokok(): void
+    public function test_anggota_baru_mendapat_id_otomatis_dan_simpanan_pokok(): void
     {
         $this->actingAs($this->pengurus());
 
+        // Nomor yang dikirim dari luar diabaikan; ID selalu dibuat otomatis berurutan.
         $this->post('/anggota', [
-            'nomor' => 99, 'nama' => 'Anggota Uji', 'jabatan' => 'Guru', 'tanggal_masuk' => now()->toDateString(),
+            'nomor' => 3, 'nama' => 'Anggota Uji', 'jabatan' => 'Guru', 'tanggal_masuk' => now()->toDateString(),
             'cara_bayar' => 'setor', 'setoran_manasuka' => 50000, 'catat_pokok' => 1,
         ])->assertRedirect()->assertSessionHas('sukses');
 
-        $anggota = Anggota::where('nomor', 99)->firstOrFail();
+        $anggota = Anggota::where('nama', 'Anggota Uji')->firstOrFail();
+        $this->assertSame('KGB025', $anggota->kode);
+        $this->assertSame('KGB025', $anggota->user->username);
         $this->assertSame(5000, Keuangan::saldoAnggota($anggota->id)['pokok']);
-        $this->assertTrue(User::where('username', '99')->where('anggota_id', $anggota->id)->exists());
 
-        $this->post('/anggota', ['nomor' => 99, 'nama' => 'Kembar', 'tanggal_masuk' => now()->toDateString(), 'cara_bayar' => 'setor'])
-            ->assertSessionHasErrors('nomor');
+        $this->post('/logout');
+        $this->post('/login', ['id_anggota' => 'kgb025'])->assertRedirect('/saya');
+        $this->assertAuthenticatedAs($anggota->user);
     }
 }

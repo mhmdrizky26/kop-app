@@ -40,7 +40,7 @@
                     <p class="text-sm text-blue-100">SHU bersih</p>
                     <p class="text-xs text-blue-200">Pendapatan dikurangi biaya</p>
                 </div>
-                <p class="text-2xl font-semibold tracking-tight tabular-nums">{{ rupiah($shu['bersih']) }}</p>
+                <p class="text-xl font-semibold tracking-tight tabular-nums sm:text-2xl">{{ rupiah($shu['bersih']) }}</p>
             </div>
         </div>
 
@@ -88,7 +88,7 @@
             </div>
         </div>
         <div class="overflow-x-auto">
-            <table class="tbl">
+            <table class="tbl tbl-stack">
                 <thead>
                     <tr>
                         <th>Anggota</th>
@@ -102,23 +102,23 @@
                 <tbody>
                     @foreach ($shu['perAnggota'] as $b)
                         <tr>
-                            <td><a href="{{ route('anggota.show', $b['anggota']) }}" class="font-medium whitespace-nowrap text-slate-900 hover:text-blue-700"><span class="mr-2 inline-block w-5 text-xs font-normal text-slate-400 tabular-nums">{{ $b['anggota']->nomor }}</span>{{ $b['anggota']->nama }}</a></td>
-                            <td class="num">{{ rupiah($b['simpanan'], false) }}</td>
-                            <td class="num">{{ angka($b['jasa_dibayar']) }}</td>
-                            <td class="num">{{ angka($b['dari_simpanan']) }}</td>
-                            <td class="num">{{ angka($b['dari_pinjaman']) }}</td>
-                            <td class="num font-semibold text-slate-900">{{ rupiah($b['total'], false) }}</td>
+                            <td><a href="{{ route('anggota.show', $b['anggota']) }}" class="font-medium whitespace-nowrap text-slate-900 hover:text-blue-700"><span class="mr-2 inline-block w-14 font-mono text-xs font-normal text-slate-400">{{ $b['anggota']->kode }}</span>{{ $b['anggota']->nama }}</a></td>
+                            <td class="num" data-label="Saldo simpanan">{{ rupiah($b['simpanan'], false) }}</td>
+                            <td class="num" data-label="Jasa dibayar">{{ angka($b['jasa_dibayar']) }}</td>
+                            <td class="num" data-label="Dari jasa simpanan">{{ angka($b['dari_simpanan']) }}</td>
+                            <td class="num" data-label="Dari jasa pinjaman">{{ angka($b['dari_pinjaman']) }}</td>
+                            <td class="num font-semibold text-slate-900" data-label="Bagian SHU">{{ rupiah($b['total'], false) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
                 <tfoot>
                     <tr>
                         <td>Jumlah</td>
-                        <td class="num">{{ rupiah($shu['totalSimpanan'], false) }}</td>
-                        <td class="num">{{ rupiah($shu['totalJasa'], false) }}</td>
-                        <td class="num">{{ rupiah(collect($shu['perAnggota'])->sum('dari_simpanan'), false) }}</td>
-                        <td class="num">{{ rupiah(collect($shu['perAnggota'])->sum('dari_pinjaman'), false) }}</td>
-                        <td class="num">{{ rupiah(collect($shu['perAnggota'])->sum('total'), false) }}</td>
+                        <td class="num" data-label="Saldo simpanan">{{ rupiah($shu['totalSimpanan'], false) }}</td>
+                        <td class="num" data-label="Jasa dibayar">{{ rupiah($shu['totalJasa'], false) }}</td>
+                        <td class="num" data-label="Dari jasa simpanan">{{ rupiah(collect($shu['perAnggota'])->sum('dari_simpanan'), false) }}</td>
+                        <td class="num" data-label="Dari jasa pinjaman">{{ rupiah(collect($shu['perAnggota'])->sum('dari_pinjaman'), false) }}</td>
+                        <td class="num" data-label="Bagian SHU">{{ rupiah(collect($shu['perAnggota'])->sum('total'), false) }}</td>
                     </tr>
                 </tfoot>
             </table>

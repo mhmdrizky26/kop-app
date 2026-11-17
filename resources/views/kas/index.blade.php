@@ -15,18 +15,20 @@
             <div class="card">
                 <div class="card-head"><h2 class="card-title">Catatan tahun buku {{ $tahun->nama }}</h2></div>
                 <div class="overflow-x-auto">
-                    <table class="tbl">
+                    <table class="tbl tbl-stack">
                         <thead><tr><th>Tanggal</th><th>Kategori</th><th>Jenis</th><th class="num">Jumlah</th><th></th></tr></thead>
                         <tbody>
                             @forelse ($kas as $k)
                                 <tr>
                                     <td class="whitespace-nowrap text-slate-500">{{ $k->tanggal->translatedFormat('j M Y') }}</td>
-                                    <td>
-                                        <p class="font-medium text-slate-900">{{ $k->kategori }}</p>
-                                        @if ($k->keterangan) <p class="text-xs text-slate-500">{{ $k->keterangan }}</p> @endif
+                                    <td data-label="Kategori">
+                                        <span class="min-w-0">
+                                            <span class="block font-medium text-slate-900">{{ $k->kategori }}</span>
+                                            @if ($k->keterangan) <span class="block text-xs text-slate-500">{{ $k->keterangan }}</span> @endif
+                                        </span>
                                     </td>
-                                    <td><span @class(['badge', 'badge-blue' => $k->tipe === 'pendapatan', 'badge-slate' => $k->tipe === 'biaya'])>{{ $k->tipe === 'pendapatan' ? 'Pendapatan' : 'Biaya' }}</span></td>
-                                    <td @class(['num font-medium', 'text-slate-900' => $k->tipe === 'pendapatan', 'text-slate-500' => $k->tipe === 'biaya'])>{{ $k->tipe === 'biaya' ? '−' : '+' }}{{ rupiah($k->jumlah, false) }}</td>
+                                    <td data-label="Jenis"><span @class(['badge', 'badge-blue' => $k->tipe === 'pendapatan', 'badge-slate' => $k->tipe === 'biaya'])>{{ $k->tipe === 'pendapatan' ? 'Pendapatan' : 'Biaya' }}</span></td>
+                                    <td data-label="Jumlah" @class(['num font-medium', 'text-slate-900' => $k->tipe === 'pendapatan', 'text-slate-500' => $k->tipe === 'biaya'])>{{ $k->tipe === 'biaya' ? '−' : '+' }}{{ rupiah($k->jumlah, false) }}</td>
                                     <td class="text-right">
                                         <form method="POST" action="{{ route('kas.destroy', $k) }}" onsubmit="return confirm('Hapus catatan ini?')">
                                             @csrf @method('DELETE')

@@ -23,7 +23,7 @@ class TransaksiController extends Controller
             ->when($request->filled('bulan'), fn ($q) => $q->whereDate('periode', $this->periode($request)))
             ->when($request->filled('jenis'), fn ($q) => $q->where('jenis', $request->jenis))
             ->when($request->filled('cari'), fn ($q) => $q->whereHas('anggota', fn ($a) => $a
-                ->where('nama', 'like', '%'.$request->cari.'%')->orWhere('nomor', $request->cari)))
+                ->where('nama', 'like', '%'.$request->cari.'%')->orWhere('nomor', Anggota::nomorDariKode($request->cari))))
             ->latest('tanggal')->latest('id')
             ->paginate(20)->withQueryString();
 

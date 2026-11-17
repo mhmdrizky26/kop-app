@@ -14,14 +14,14 @@
                 <div class="flex flex-wrap items-start justify-between gap-4">
                     <div>
                         <p class="text-sm text-slate-500">Sisa pinjaman</p>
-                        <p class="mt-1 text-3xl font-semibold tracking-tight text-slate-900 tabular-nums">{{ rupiah($pinjaman->sisa) }}</p>
+                        <p class="mt-1 text-2xl font-semibold sm:text-3xl tracking-tight text-slate-900 tabular-nums">{{ rupiah($pinjaman->sisa) }}</p>
                     </div>
                     <span @class(['badge', 'badge-blue' => $pinjaman->status === 'aktif', 'badge-green' => $pinjaman->status === 'lunas'])>{{ $pinjaman->status === 'aktif' ? 'Masih berjalan' : 'Lunas' }}</span>
                 </div>
                 <div class="mt-5 h-2 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full bg-blue-600" style="width: {{ $pinjaman->persen_lunas }}%"></div></div>
                 <p class="mt-2 text-xs text-slate-500">Terbayar {{ rupiah($pinjaman->terbayar) }} dari {{ rupiah($pinjaman->pokok) }} ({{ $pinjaman->persen_lunas }}%)</p>
 
-                <dl class="mt-6 grid gap-x-6 gap-y-4 border-t border-slate-100 pt-5 text-sm sm:grid-cols-3">
+                <dl class="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-slate-100 pt-5 text-sm sm:grid-cols-3">
                     <div><dt class="text-slate-500">Angsuran pokok per bulan</dt><dd class="mt-0.5 font-medium text-slate-900 tabular-nums">{{ rupiah($pinjaman->angsuran_pokok) }}</dd></div>
                     <div><dt class="text-slate-500">Jasa per bulan</dt><dd class="mt-0.5 font-medium text-slate-900 tabular-nums">{{ rupiah($pinjaman->tagihan_jasa) }}</dd></div>
                     <div><dt class="text-slate-500">Lama angsuran</dt><dd class="mt-0.5 font-medium text-slate-900">{{ $pinjaman->tenor }} bulan</dd></div>
@@ -34,15 +34,15 @@
             <div class="card">
                 <div class="card-head"><h2 class="card-title">Riwayat pinjaman</h2></div>
                 <div class="overflow-x-auto">
-                    <table class="tbl">
+                    <table class="tbl tbl-stack">
                         <thead><tr><th>Tanggal</th><th>Jenis</th><th>Cara bayar</th><th class="num">Jumlah</th></tr></thead>
                         <tbody>
                             @foreach ($riwayat as $t)
                                 <tr>
                                     <td class="whitespace-nowrap text-slate-500">{{ $t->tanggal->translatedFormat('j M Y') }}</td>
-                                    <td>{{ $t->label }} @if ($t->keterangan)<span class="text-xs text-slate-500">· {{ $t->keterangan }}</span>@endif</td>
-                                    <td class="text-slate-500">{{ $t->label_metode ?? '–' }}</td>
-                                    <td class="num font-medium text-slate-900">{{ rupiah($t->jumlah, false) }}</td>
+                                    <td data-label="Jenis"><span>{{ $t->label }} @if ($t->keterangan)<span class="text-xs text-slate-500">· {{ $t->keterangan }}</span>@endif</span></td>
+                                    <td class="text-slate-500" data-label="Cara bayar">{{ $t->label_metode ?? '–' }}</td>
+                                    <td class="num font-medium text-slate-900" data-label="Jumlah">{{ rupiah($t->jumlah, false) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -67,7 +67,7 @@
                             <label class="label">Jasa <span class="font-normal text-slate-400">(boleh kosong)</span></label>
                             <x-rupiah name="jasa" />
                         </div>
-                        <div class="grid grid-cols-2 gap-3">
+                        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
                             <div>
                                 <label for="tanggal" class="label">Tanggal</label>
                                 <input id="tanggal" type="date" name="tanggal" value="{{ old('tanggal', now()->toDateString()) }}" max="{{ now()->toDateString() }}" class="input" required>
@@ -91,7 +91,7 @@
                     <span class="avatar">{{ $pinjaman->anggota->inisial }}</span>
                     <span class="min-w-0 flex-1">
                         <span class="block truncate text-sm font-medium text-slate-900">{{ $pinjaman->anggota->nama }}</span>
-                        <span class="block text-xs text-slate-500">No. {{ $pinjaman->anggota->nomor }} · lihat buku tabungan</span>
+                        <span class="block text-xs text-slate-500">{{ $pinjaman->anggota->kode }} · lihat buku tabungan</span>
                     </span>
                     <x-icon name="right" class="size-4 text-slate-400" />
                 </a>

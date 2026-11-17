@@ -9,7 +9,8 @@
         $awalShu = collect($pos)->map(fn ($nama, $kolom) => (float) old($kolom, $tahun->$kolom));
     @endphp
 
-    <form method="POST" action="{{ route('pengaturan.update') }}" class="max-w-3xl space-y-6">
+    <div class="grid items-start gap-6 xl:grid-cols-3">
+    <form method="POST" action="{{ route('pengaturan.update') }}" class="space-y-6 xl:col-span-2">
         @csrf @method('PUT')
 
         <div class="card">
@@ -110,20 +111,20 @@
         </div>
 
         <div class="flex justify-end">
-            <button class="btn btn-primary">Simpan pengaturan</button>
+            <button class="btn btn-primary max-sm:w-full">Simpan pengaturan</button>
         </div>
     </form>
 
     {{-- Tahun buku --}}
-    <div class="card mt-10 max-w-3xl">
+    <div class="card xl:sticky xl:top-24">
         <div class="card-head">
             <div>
                 <h2 class="card-title">Tahun buku</h2>
                 <p class="mt-0.5 text-xs text-slate-500">Saat tahun buku baru dibuka, saldo simpanan dan pinjaman otomatis berlanjut.</p>
             </div>
-            <form method="POST" action="{{ route('pengaturan.tahun-baru') }}" onsubmit="return confirm('Buka tahun buku berikutnya? Tahun buku {{ $tahun->nama }} tidak lagi menjadi tahun aktif.')">
+            <form method="POST" action="{{ route('pengaturan.tahun-baru') }}" class="w-full sm:w-auto" onsubmit="return confirm('Buka tahun buku berikutnya? Tahun buku {{ $tahun->nama }} tidak lagi menjadi tahun aktif.')">
                 @csrf
-                <button class="btn btn-ghost">Buka tahun buku berikutnya</button>
+                <button class="btn btn-ghost w-full sm:w-auto">Buka tahun buku berikutnya</button>
             </form>
         </div>
         @foreach ($daftarTahun as $t)
@@ -135,5 +136,6 @@
                 <span @class(['badge', 'badge-blue' => $t->aktif, 'badge-slate' => ! $t->aktif])>{{ $t->aktif ? 'Sedang berjalan' : 'Selesai' }}</span>
             </div>
         @endforeach
+    </div>
     </div>
 @endsection

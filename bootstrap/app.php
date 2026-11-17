@@ -13,6 +13,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Percayai header X-Forwarded-* dari tunnel/proxy (mis. ngrok) supaya URL memakai https.
+        $middleware->trustProxies(at: '*');
         $middleware->alias(['peran' => Peran::class]);
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->redirectUsersTo(fn (Request $request) => route($request->user()?->isPengurus() ? 'dashboard' : 'portal'));

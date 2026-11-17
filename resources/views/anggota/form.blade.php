@@ -6,7 +6,7 @@
 @section('keterangan', $baru ? 'Akun login anggota dibuat otomatis setelah disimpan.' : $anggota->nama)
 
 @section('isi')
-    <form method="POST" action="{{ $baru ? route('anggota.store') : route('anggota.update', $anggota) }}" class="card max-w-3xl">
+    <form method="POST" action="{{ $baru ? route('anggota.store') : route('anggota.update', $anggota) }}" class="card max-w-4xl">
         @csrf
         @unless ($baru) @method('PUT') @endunless
 
@@ -15,10 +15,9 @@
                 <h2 class="card-title">Identitas</h2>
                 <div class="mt-4 grid gap-5 sm:grid-cols-6">
                     <div class="sm:col-span-2">
-                        <label for="nomor" class="label">Nomor anggota</label>
-                        <input id="nomor" type="number" name="nomor" min="1" value="{{ old('nomor', $anggota->nomor) }}" class="input" required>
-                        <p class="hint">Dipakai anggota untuk login.</p>
-                        @error('nomor') <p class="galat">{{ $message }}</p> @enderror
+                        <label for="kode" class="label">ID anggota</label>
+                        <input id="kode" value="{{ $anggota->kode }}" class="input cursor-not-allowed bg-slate-100 font-mono font-semibold tracking-wider text-slate-600" disabled>
+                        <p class="hint">Dibuat otomatis. Dipakai anggota untuk login.</p>
                     </div>
                     <div class="sm:col-span-4">
                         <label for="nama" class="label">Nama lengkap</label>

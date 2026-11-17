@@ -27,7 +27,7 @@
             <p class="text-xs text-slate-500">Semua angka dalam rupiah</p>
         </div>
         <div class="overflow-x-auto">
-            <table class="tbl">
+            <table class="tbl tbl-freeze">
                 <thead>
                     <tr>
                         <th rowspan="2" class="align-bottom">Anggota</th>
@@ -44,7 +44,7 @@
                 <tbody>
                     @forelse ($baris as $b)
                         <tr>
-                            <td><a href="{{ route('anggota.show', $b['anggota']) }}" class="font-medium whitespace-nowrap text-slate-900 hover:text-blue-700"><span class="mr-2 inline-block w-5 text-xs font-normal text-slate-400 tabular-nums">{{ $b['anggota']->nomor }}</span>{{ $b['anggota']->nama }}</a></td>
+                            <td><a href="{{ route('anggota.show', $b['anggota']) }}" class="font-medium whitespace-nowrap text-slate-900 hover:text-blue-700"><span class="mr-2 inline-block w-14 font-mono text-xs font-normal text-slate-400">{{ $b['anggota']->kode }}</span>{{ $b['anggota']->nama }}</a></td>
                             <td class="num border-l border-slate-100">{{ angka($b['wajib']) }}</td>
                             <td class="num">{{ angka($b['manasuka']) }}</td>
                             <td class="num">{{ angka($b['angsuran']) }}</td>

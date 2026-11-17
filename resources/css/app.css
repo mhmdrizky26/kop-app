@@ -34,9 +34,9 @@
         @apply rounded-md px-2.5 py-1.5 text-xs;
     }
 
-    /* Isian form */
+    /* Isian form. Di HP huruf 16px supaya iOS tidak memperbesar layar saat isian diketuk. */
     .input {
-        @apply block w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 focus:outline-none;
+        @apply block w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-slate-900 sm:text-sm transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 focus:outline-none;
     }
     .label {
         @apply mb-1.5 block text-sm font-medium text-slate-700;
@@ -97,6 +97,66 @@
     }
     .tbl .num {
         @apply text-right whitespace-nowrap tabular-nums;
+    }
+
+    /*
+     * Tabel bertumpuk: di layar kecil setiap baris menjadi kartu.
+     * Kolom pertama jadi judul kartu, kolom lain tampil "label ... nilai" (label dari data-label).
+     */
+    @media (width < 48rem) {
+        .tbl-stack thead {
+            @apply hidden;
+        }
+        .tbl-stack,
+        .tbl-stack tbody,
+        .tbl-stack tfoot,
+        .tbl-stack tr {
+            @apply block w-full;
+        }
+        .tbl-stack tr {
+            @apply border-t border-slate-100 px-4 py-3;
+        }
+        .tbl-stack tbody:first-of-type tr:first-child {
+            @apply border-t-0;
+        }
+        .tbl-stack tfoot tr {
+            @apply border-slate-200 bg-slate-50/70;
+        }
+        .tbl-stack td,
+        .tbl-stack tfoot td {
+            @apply flex items-center justify-between gap-4 border-0 bg-transparent px-0 py-1 text-right;
+        }
+        .tbl-stack td:not([data-label]) {
+            @apply justify-end;
+        }
+        .tbl-stack td[data-label]::before {
+            content: attr(data-label);
+            @apply text-left text-xs font-normal text-slate-500;
+        }
+        .tbl-stack td:first-child,
+        .tbl-stack td[colspan] {
+            @apply block pb-1.5 text-left;
+        }
+        .tbl-stack td.text-center {
+            @apply text-center;
+        }
+        .tbl-stack tbody tr:hover td {
+            @apply bg-transparent;
+        }
+    }
+
+    /* Tabel lebar (laporan): kolom pertama tetap terlihat saat tabel digeser ke samping. */
+    .tbl-freeze thead tr:first-child th:first-child,
+    .tbl-freeze tbody td:first-child,
+    .tbl-freeze tfoot td:first-child {
+        @apply sticky left-0 z-[1] bg-white shadow-[1px_0_0_var(--color-slate-100)];
+    }
+    .tbl-freeze thead tr:first-child th:first-child,
+    .tbl-freeze tfoot td:first-child {
+        @apply bg-slate-50;
+    }
+    .tbl-freeze tbody tr:hover td:first-child {
+        @apply bg-blue-50;
     }
 
     /* Tab pilihan */

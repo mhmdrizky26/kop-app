@@ -7,7 +7,7 @@
         </div>
     </div>
     <div class="overflow-x-auto">
-        <table class="tbl">
+        <table class="tbl tbl-freeze">
             <thead>
                 <tr>
                     <th rowspan="2" class="align-bottom">Bulan</th>

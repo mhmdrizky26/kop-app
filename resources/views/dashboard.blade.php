@@ -34,8 +34,8 @@
                     <span class="flex items-center gap-1.5"><span class="size-2.5 rounded-sm bg-blue-200"></span> Keluar</span>
                 </div>
             </div>
-            <div class="p-5">
-                <div class="flex h-44 items-end gap-2 sm:gap-3">
+            <div class="p-4 sm:p-5">
+                <div class="flex h-36 items-end gap-1 sm:h-44 sm:gap-3">
                     @foreach ($arus as $a)
                         <div class="flex h-full flex-1 items-end justify-center gap-1" title="{{ $a['bulan']->translatedFormat('F Y') }}: masuk {{ rupiah($a['masuk']) }}, keluar {{ rupiah($a['keluar']) }}">
                             <div class="w-full max-w-4 rounded-t bg-blue-600" style="height: {{ max($a['masuk'] > 0 ? 2 : 0, $a['masuk'] / $tertinggi * 100) }}%"></div>
@@ -43,9 +43,9 @@
                         </div>
                     @endforeach
                 </div>
-                <div class="mt-2 flex gap-2 border-t border-slate-100 pt-2 sm:gap-3">
+                <div class="mt-2 flex gap-1 border-t border-slate-100 pt-2 sm:gap-3">
                     @foreach ($arus as $a)
-                        <span @class(['flex-1 text-center text-[11px]', 'font-semibold text-blue-700' => $a['bulan']->isSameMonth($periode), 'text-slate-400' => ! $a['bulan']->isSameMonth($periode)])>{{ $a['bulan']->translatedFormat('M') }}</span>
+                        <span @class(['flex-1 text-center text-[10px] sm:text-[11px]', 'font-semibold text-blue-700' => $a['bulan']->isSameMonth($periode), 'text-slate-400' => ! $a['bulan']->isSameMonth($periode)])>{{ $a['bulan']->translatedFormat('M') }}</span>
                     @endforeach
                 </div>
             </div>
@@ -86,7 +86,7 @@
                         <p class="truncate text-sm font-medium text-slate-900">{{ $b['anggota']->nama }}</p>
                         <p class="text-xs text-slate-500">{{ $b['anggota']->potong_gaji ? 'Potong gaji' : 'Setor langsung' }}</p>
                     </div>
-                    <span class="text-sm font-medium text-slate-900 tabular-nums">{{ rupiah($b['total']) }}</span>
+                    <span class="shrink-0 text-sm font-medium whitespace-nowrap text-slate-900 tabular-nums">{{ rupiah($b['total']) }}</span>
                 </a>
             @empty
                 <p class="px-5 py-10 text-center text-sm text-slate-500">Semua anggota sudah membayar bulan ini.</p>
@@ -110,7 +110,7 @@
                         <p class="truncate text-sm font-medium text-slate-900">{{ $t->anggota->nama }}</p>
                         <p class="text-xs text-slate-500">{{ $t->label }} · {{ $t->tanggal->translatedFormat('j M') }}</p>
                     </div>
-                    <span @class(['text-sm font-medium tabular-nums', 'text-slate-900' => $t->arah === 'masuk', 'text-slate-500' => $t->arah === 'keluar'])>{{ $t->arah === 'keluar' ? '−' : '+' }}{{ rupiah($t->jumlah, false) }}</span>
+                    <span @class(['shrink-0 text-sm font-medium whitespace-nowrap tabular-nums', 'text-slate-900' => $t->arah === 'masuk', 'text-slate-500' => $t->arah === 'keluar'])>{{ $t->arah === 'keluar' ? '−' : '+' }}{{ rupiah($t->jumlah, false) }}</span>
                 </div>
             @empty
                 <p class="px-5 py-10 text-center text-sm text-slate-500">Belum ada transaksi.</p>

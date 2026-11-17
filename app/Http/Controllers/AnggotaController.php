@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\Keuangan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class AnggotaController extends Controller
@@ -19,7 +20,7 @@ class AnggotaController extends Controller
         $anggota = Anggota::query()
             ->when($status !== 'semua', fn ($q) => $q->where('status', $status))
             ->when($request->filled('cari'), fn ($q) => $q->where(fn ($w) => $w
-                ->where('nama', 'like', '%'.$request->cari.'%')->orWhere('nomor', $request->cari)))
+                ->where('nama', 'like', '%'.$request->cari.'%')->orWhere('nomor', Anggota::nomorDariKode($request->cari))))
             ->orderBy('nomor')->get();
 
         return view('anggota.index', [
@@ -33,7 +34,7 @@ class AnggotaController extends Controller
     {
         return view('anggota.form', [
             'anggota' => new Anggota([
-                'nomor' => (int) Anggota::max('nomor') + 1,
+                'nomor' => Anggota::nomorBerikutnya(),
                 'tanggal_masuk' => today(),
                 'status' => 'aktif',
             ]),
@@ -44,15 +45,14 @@ class AnggotaController extends Controller
     public function store(Request $request)
     {
         $data = $this->validasi($request);
-        $pin = (string) random_int(100000, 999999);
         $tahun = $this->tahun();
 
-        $anggota = DB::transaction(function () use ($data, $pin, $request, $tahun) {
-            $anggota = Anggota::create($data);
+        $anggota = DB::transaction(function () use ($data, $request, $tahun) {
+            $anggota = Anggota::create($data + ['nomor' => Anggota::nomorBerikutnya()]);
 
             User::create([
-                'name' => $anggota->nama, 'username' => (string) $anggota->nomor,
-                'password' => $pin, 'role' => 'anggota', 'anggota_id' => $anggota->id,
+                'name' => $anggota->nama, 'username' => $anggota->kode,
+                'password' => Str::random(40), 'role' => 'anggota', 'anggota_id' => $anggota->id,
             ]);
 
             if ($request->boolean('catat_pokok') && $tahun->simpanan_pokok > 0) {
@@ -69,7 +69,7 @@ class AnggotaController extends Controller
         });
 
         return redirect()->route('anggota.show', $anggota)
-            ->with('sukses', "Anggota baru tersimpan. Login anggota: nomor {$anggota->nomor}, PIN {$pin}. Catat PIN ini, karena tidak ditampilkan lagi.");
+            ->with('sukses', "Anggota baru tersimpan. ID anggota: {$anggota->kode}. Anggota masuk dengan ID ini.");
     }
 
     public function show(Anggota $anggota)
@@ -96,28 +96,15 @@ class AnggotaController extends Controller
 
         DB::transaction(function () use ($anggota, $data) {
             $anggota->update($data);
-            $anggota->user?->update(['name' => $anggota->nama, 'username' => (string) $anggota->nomor]);
+            $anggota->user?->update(['name' => $anggota->nama]);
         });
 
         return redirect()->route('anggota.show', $anggota)->with('sukses', 'Data anggota diperbarui.');
     }
 
-    public function resetPin(Anggota $anggota)
-    {
-        $pin = (string) random_int(100000, 999999);
-
-        User::updateOrCreate(
-            ['anggota_id' => $anggota->id],
-            ['name' => $anggota->nama, 'username' => (string) $anggota->nomor, 'password' => $pin, 'role' => 'anggota']
-        );
-
-        return back()->with('sukses', "PIN baru untuk {$anggota->nama}: {$pin}. Catat PIN ini, karena tidak ditampilkan lagi.");
-    }
-
     private function validasi(Request $request, ?Anggota $anggota = null): array
     {
         $data = $request->validate([
-            'nomor' => ['required', 'integer', 'min:1', Rule::unique('anggota', 'nomor')->ignore($anggota?->id)],
             'nama' => ['required', 'string', 'max:100'],
             'jabatan' => ['nullable', 'string', 'max:50'],
             'no_hp' => ['nullable', 'string', 'max:30'],

@@ -29,4 +29,10 @@ class User extends Authenticatable
     {
         return $this->role === 'pengurus';
     }
+
+    /** Menyamakan ketikan anggota dengan ID tersimpan: huruf besar, tanpa spasi atau tanda hubung. */
+    public static function rapikanIdAnggota(string $id): string
+    {
+        return strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $id));
+    }
 }
