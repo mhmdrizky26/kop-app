@@ -1,0 +1,113 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../views';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+[x-cloak] {
+    display: none !important;
+}
+
+@layer components {
+    /* Tombol */
+    .btn {
+        @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium whitespace-nowrap transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+    }
+    .btn-primary {
+        @apply bg-blue-600 text-white shadow-sm shadow-blue-600/20 hover:bg-blue-700;
+    }
+    .btn-soft {
+        @apply bg-blue-50 text-blue-700 hover:bg-blue-100;
+    }
+    .btn-ghost {
+        @apply border border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50;
+    }
+    .btn-danger {
+        @apply text-rose-600 hover:bg-rose-50;
+    }
+    .btn-sm {
+        @apply rounded-md px-2.5 py-1.5 text-xs;
+    }
+
+    /* Isian form */
+    .input {
+        @apply block w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 focus:outline-none;
+    }
+    .label {
+        @apply mb-1.5 block text-sm font-medium text-slate-700;
+    }
+    .hint {
+        @apply mt-1.5 text-xs leading-relaxed text-slate-500;
+    }
+    .galat {
+        @apply mt-1.5 text-xs font-medium text-rose-600;
+    }
+
+    /* Kartu */
+    .card {
+        @apply rounded-2xl border border-slate-200 bg-white;
+    }
+    .card-head {
+        @apply flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4;
+    }
+    .card-title {
+        @apply text-sm font-semibold text-slate-900;
+    }
+
+    /* Label status */
+    .badge {
+        @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap;
+    }
+    .badge-blue {
+        @apply bg-blue-50 text-blue-700;
+    }
+    .badge-green {
+        @apply bg-emerald-50 text-emerald-700;
+    }
+    .badge-amber {
+        @apply bg-amber-50 text-amber-700;
+    }
+    .badge-slate {
+        @apply bg-slate-100 text-slate-600;
+    }
+    .badge-rose {
+        @apply bg-rose-50 text-rose-700;
+    }
+
+    /* Tabel */
+    .tbl {
+        @apply w-full text-sm;
+    }
+    .tbl th {
+        @apply bg-slate-50/70 px-4 py-2.5 text-left text-xs font-medium tracking-wide whitespace-nowrap text-slate-500;
+    }
+    .tbl td {
+        @apply border-t border-slate-100 px-4 py-3 align-middle text-slate-700;
+    }
+    .tbl tbody tr:hover td {
+        @apply bg-blue-50/30;
+    }
+    .tbl tfoot td {
+        @apply border-t border-slate-200 bg-slate-50/70 font-semibold text-slate-900;
+    }
+    .tbl .num {
+        @apply text-right whitespace-nowrap tabular-nums;
+    }
+
+    /* Tab pilihan */
+    .tab {
+        @apply rounded-lg px-3 py-1.5 text-sm font-medium text-slate-500 transition hover:text-slate-900;
+    }
+    .tab-on {
+        @apply bg-white text-blue-700 shadow-sm ring-1 ring-slate-200;
+    }
+
+    .avatar {
+        @apply flex size-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs font-semibold text-blue-700;
+    }
+}
