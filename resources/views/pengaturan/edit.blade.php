@@ -110,13 +110,70 @@
             <p class="px-5 pb-5 text-xs text-rose-600" x-show="total !== 100" x-cloak>Total sekarang <span x-text="total.toLocaleString('id-ID')"></span>%. Sesuaikan sampai tepat 100% agar bisa disimpan.</p>
         </div>
 
+        <div class="card scroll-mt-24" id="saldo-awal">
+            <div class="card-head">
+                <div>
+                    <h2 class="card-title">Saldo awal neraca</h2>
+                    <p class="mt-0.5 text-xs text-slate-500">Saldo pada awal tahun buku untuk pos yang tidak berasal dari transaksi anggota. Saat tahun buku baru dibuka, terisi otomatis dari saldo akhir tahun sebelumnya.</p>
+                </div>
+            </div>
+            <div class="grid gap-x-5 gap-y-4 p-5 sm:grid-cols-2">
+                @foreach (\App\Models\TahunBuku::SALDO_AWAL_NERACA as $kolom => $nama)
+                    <div>
+                        <label class="label">{{ $nama }}</label>
+                        <x-rupiah :name="$kolom" :value="$tahun->$kolom" />
+                        @error($kolom) <p class="galat">{{ $message }}</p> @enderror
+                    </div>
+                @endforeach
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-head">
+                <div>
+                    <h2 class="card-title">Pengesah laporan</h2>
+                    <p class="mt-0.5 text-xs text-slate-500">Nama yang tercantum di kolom tanda tangan laporan cetak, PDF, dan Excel.</p>
+                </div>
+            </div>
+            <div class="grid gap-x-5 gap-y-4 p-5 sm:grid-cols-2">
+                @foreach (\App\Models\TahunBuku::PENGESAH as $kolom => $jabatan)
+                    <div>
+                        <label for="{{ $kolom }}" class="label">{{ $jabatan }}</label>
+                        <input id="{{ $kolom }}" name="{{ $kolom }}" value="{{ old($kolom, $tahun->$kolom) }}" class="input" maxlength="100">
+                    </div>
+                @endforeach
+            </div>
+        </div>
+
         <div class="flex justify-end">
             <button class="btn btn-primary max-sm:w-full">Simpan pengaturan</button>
         </div>
     </form>
 
+    <div class="space-y-6">
+    {{-- Identitas koperasi: dulu diisi di file .env --}}
+    <form method="POST" action="{{ route('pengaturan.identitas') }}" class="card">
+        @csrf @method('PUT')
+        <div class="card-head">
+            <div>
+                <h2 class="card-title">Identitas koperasi</h2>
+                <p class="mt-0.5 text-xs text-slate-500">Tampil di aplikasi dan di kop laporan cetak, PDF, dan Excel.</p>
+            </div>
+        </div>
+        <div class="space-y-4 p-5">
+            @foreach (\App\Models\PengaturanAplikasi::IDENTITAS as $kunci => [, $label])
+                <div>
+                    <label for="{{ $kunci }}" class="label">{{ $label }}</label>
+                    <input id="{{ $kunci }}" name="{{ $kunci }}" value="{{ old($kunci, $identitas[$kunci]) }}" class="input" maxlength="150">
+                    @error($kunci) <p class="galat">{{ $message }}</p> @enderror
+                </div>
+            @endforeach
+            <button class="btn btn-primary w-full">Simpan identitas</button>
+        </div>
+    </form>
+
     {{-- Tahun buku --}}
-    <div class="card xl:sticky xl:top-24">
+    <div class="card">
         <div class="card-head">
             <div>
                 <h2 class="card-title">Tahun buku</h2>
@@ -136,6 +193,7 @@
                 <span @class(['badge', 'badge-blue' => $t->aktif, 'badge-slate' => ! $t->aktif])>{{ $t->aktif ? 'Sedang berjalan' : 'Selesai' }}</span>
             </div>
         @endforeach
+    </div>
     </div>
     </div>
 @endsection

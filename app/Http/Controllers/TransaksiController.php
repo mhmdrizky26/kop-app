@@ -12,10 +12,11 @@ use Illuminate\Validation\ValidationException;
 
 class TransaksiController extends Controller
 {
-    /** Jenis yang bisa dicatat dari form: setoran dan penarikan simpanan. */
-    private const JENIS_FORM = [
-        'simpanan_manasuka', 'simpanan_wajib', 'simpanan_pokok', 'tarik_manasuka', 'tarik_wajib', 'tarik_pokok',
-    ];
+    /**
+     * Jenis yang bisa dicatat dari form: hanya penarikan simpanan.
+     * Semua setoran dicatat lewat tagihan bulanan supaya tidak ada setoran ganda.
+     */
+    private const JENIS_FORM = ['tarik_manasuka', 'tarik_wajib', 'tarik_pokok'];
 
     public function index(Request $request)
     {
@@ -52,16 +53,14 @@ class TransaksiController extends Controller
         ]);
 
         // Penarikan tidak boleh melebihi saldo simpanan yang ditarik.
-        if (str_starts_with($data['jenis'], 'tarik_')) {
-            $kunci = substr($data['jenis'], 6);
-            $saldo = Keuangan::saldoAnggota((int) $data['anggota_id'])[$kunci];
-            if ($data['jumlah'] > $saldo) {
-                throw ValidationException::withMessages([
-                    'jumlah' => 'Penarikan melebihi saldo. Saldo simpanan '.$kunci.' saat ini '.rupiah($saldo).'.',
-                ]);
-            }
-            $data['metode'] = null;
+        $kunci = substr($data['jenis'], 6);
+        $saldo = Keuangan::saldoAnggota((int) $data['anggota_id'])[$kunci];
+        if ($data['jumlah'] > $saldo) {
+            throw ValidationException::withMessages([
+                'jumlah' => 'Penarikan melebihi saldo. Saldo simpanan '.$kunci.' saat ini '.rupiah($saldo).'.',
+            ]);
         }
+        $data['metode'] = null;
 
         $tanggal = Carbon::parse($data['tanggal']);
         Transaksi::create($data + [
@@ -70,7 +69,7 @@ class TransaksiController extends Controller
             'user_id' => $request->user()->id,
         ]);
 
-        return redirect()->route('transaksi.index')->with('sukses', 'Transaksi sudah dicatat.');
+        return redirect()->route('transaksi.index')->with('sukses', 'Penarikan sudah dicatat.');
     }
 
     public function destroy(Transaksi $transaksi)

@@ -16,30 +16,9 @@
                 <x-logo terang class="size-10" />
                 <span class="text-base font-semibold">{{ config('app.name') }}</span>
             </div>
-            <div class="relative max-w-lg">
-                <span class="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-blue-50 ring-1 ring-white/20">
-                    <span class="size-1.5 rounded-full bg-emerald-300"></span> Koperasi simpan pinjam
-                </span>
-                <h1 class="mt-5 text-4xl leading-tight font-semibold tracking-tight">Simpanan dan pinjaman anggota, tercatat rapi di satu tempat.</h1>
-                <p class="mt-4 text-lg leading-relaxed text-blue-100">Pengurus mencatat setoran dalam beberapa klik. Anggota bisa melihat buku tabungannya sendiri kapan saja.</p>
-
-                <ul class="mt-10 space-y-5">
-                    @foreach ([
-                        ['book', 'Buku tabungan digital', 'Simpanan pokok, wajib, dan manasuka terlihat lengkap per bulan.'],
-                        ['wallet', 'Pinjaman dan angsuran', 'Sisa pinjaman dan jadwal angsuran selalu jelas.'],
-                        ['pie', 'SHU yang transparan', 'Pembagian sisa hasil usaha dihitung otomatis dan terbuka.'],
-                    ] as [$ikon, $judul, $isi])
-                        <li class="flex gap-4">
-                            <span class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
-                                <x-icon :name="$ikon" class="size-5" />
-                            </span>
-                            <div>
-                                <p class="font-semibold">{{ $judul }}</p>
-                                <p class="mt-0.5 text-sm text-blue-100">{{ $isi }}</p>
-                            </div>
-                        </li>
-                    @endforeach
-                </ul>
+            <div class="relative">
+                <p class="text-xs font-semibold tracking-[0.2em] text-blue-100 uppercase">Koperasi simpan pinjam</p>
+                <h1 class="mt-4 text-7xl leading-[0.9] font-black tracking-tighter xl:text-8xl">Setiap rupiah,<br>tercatat.</h1>
             </div>
             <div class="relative flex items-center justify-between gap-4 border-t border-white/15 pt-6 text-sm text-blue-100">
                 <span class="flex items-center gap-2"><x-icon name="lock" class="size-4" /> Setiap anggota hanya melihat datanya sendiri</span>

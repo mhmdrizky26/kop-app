@@ -14,11 +14,13 @@ class KasController extends Controller
         $kas = KasLain::whereDate('tanggal', '>=', $tahun->mulai)->whereDate('tanggal', '<=', $tahun->selesai)
             ->latest('tanggal')->latest('id')->get();
 
+        $masukShu = $kas->where('masuk_shu', true);
+
         return view('kas.index', [
             'tahun' => $tahun,
             'kas' => $kas,
-            'pendapatan' => $kas->where('tipe', 'pendapatan')->sum('jumlah'),
-            'biaya' => $kas->where('tipe', 'biaya')->sum('jumlah'),
+            'pendapatan' => $masukShu->where('tipe', 'pendapatan')->sum('jumlah'),
+            'biaya' => $masukShu->where('tipe', 'biaya')->sum('jumlah'),
         ]);
     }
 
@@ -26,7 +28,7 @@ class KasController extends Controller
     {
         $data = $request->validate([
             'tipe' => ['required', Rule::in(['pendapatan', 'biaya'])],
-            'kategori' => ['required', 'string', 'max:100'],
+            'kategori' => ['required', Rule::in(KasLain::KATEGORI[$request->input('tipe')] ?? [])],
             'tanggal' => ['required', 'date', 'before_or_equal:today'],
             'jumlah' => ['required', 'integer', 'min:1'],
             'keterangan' => ['nullable', 'string', 'max:255'],

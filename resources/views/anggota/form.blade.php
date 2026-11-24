@@ -17,11 +17,15 @@
                     <div class="sm:col-span-2">
                         <label for="kode" class="label">ID anggota</label>
                         <input id="kode" value="{{ $anggota->kode }}" class="input cursor-not-allowed bg-slate-100 font-mono font-semibold tracking-wider text-slate-600" disabled>
-                        <p class="hint">Dibuat otomatis. Dipakai anggota untuk login.</p>
+                        <p class="hint">Nomor anggota, dibuat otomatis.</p>
                     </div>
                     <div class="sm:col-span-4">
                         <label for="nama" class="label">Nama lengkap</label>
                         <input id="nama" name="nama" value="{{ old('nama', $anggota->nama) }}" class="input" maxlength="100" required>
+                        <p class="hint">
+                            Nama pengguna untuk masuk dibuat otomatis dari nama ini, misalnya "Muhamad Rizky, S.Pd." menjadi muhamad.rizky.
+                            @unless ($baru) Sekarang: <span class="font-mono text-slate-700">{{ $anggota->user?->username }}</span>. @endunless
+                        </p>
                         @error('nama') <p class="galat">{{ $message }}</p> @enderror
                     </div>
                     <div class="sm:col-span-2">
@@ -47,23 +51,41 @@
             <section class="border-t border-slate-100 pt-6">
                 <h2 class="card-title">Setoran rutin</h2>
                 <p class="mt-1 text-sm text-slate-500">Dipakai untuk menyiapkan tagihan bulanan secara otomatis. Simpanan wajib mengikuti pengaturan, sekarang {{ rupiah($tahun->simpanan_wajib) }} per bulan.</p>
-                <div class="mt-4 grid gap-5 sm:grid-cols-2">
-                    <div>
-                        <span class="label">Cara bayar</span>
-                        @php $cara = old('cara_bayar', $anggota->potong_gaji ? 'potong_gaji' : 'setor'); @endphp
-                        <div class="grid grid-cols-2 gap-2">
-                            @foreach (['potong_gaji' => 'Potong gaji', 'setor' => 'Setor langsung'] as $kunci => $label)
-                                <label class="flex cursor-pointer items-center gap-2.5 rounded-lg border border-slate-200 px-3 py-2 text-sm has-checked:border-blue-500 has-checked:bg-blue-50 has-checked:text-blue-800">
-                                    <input type="radio" name="cara_bayar" value="{{ $kunci }}" class="size-4 accent-blue-600" @checked($cara === $kunci)> {{ $label }}
-                                </label>
-                            @endforeach
+                <div class="mt-4 max-w-sm">
+                    <label class="label">Simpanan manasuka per bulan</label>
+                    <x-rupiah name="setoran_manasuka" :value="$anggota->setoran_manasuka" />
+                    <p class="hint">Isi 0 jika anggota tidak menabung rutin.</p>
+                </div>
+
+                @php
+                    $caraAwal = collect(\App\Models\Anggota::CARA_BAYAR_BAGIAN)
+                        ->mapWithKeys(fn ($b) => [$b['kolom'] => old($b['kolom'], $anggota->{$b['kolom']} ?? 'setor')]);
+                @endphp
+                <div class="mt-6" x-data="{ cara: @js($caraAwal), semua(metode) { Object.keys(this.cara).forEach(k => this.cara[k] = metode) } }">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <span class="label mb-0">Cara bayar tiap bagian</span>
+                        <div class="flex gap-2 text-xs">
+                            <button type="button" class="font-medium text-blue-700 hover:text-blue-900" @click="semua('potong_gaji')">Semua potong gaji</button>
+                            <span class="text-slate-300">|</span>
+                            <button type="button" class="font-medium text-blue-700 hover:text-blue-900" @click="semua('setor')">Semua setor langsung</button>
                         </div>
                     </div>
-                    <div>
-                        <label class="label">Simpanan manasuka per bulan</label>
-                        <x-rupiah name="setoran_manasuka" :value="$anggota->setoran_manasuka" />
-                        <p class="hint">Isi 0 jika anggota tidak menabung rutin.</p>
+                    <div class="mt-2 divide-y divide-slate-100 rounded-xl border border-slate-200">
+                        @foreach (\App\Models\Anggota::CARA_BAYAR_BAGIAN as $bagian)
+                            <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+                                <span class="text-sm text-slate-700">{{ $bagian['label'] }}</span>
+                                <div class="grid grid-cols-2 gap-2">
+                                    @foreach (\App\Models\Transaksi::METODE as $kunci => $label)
+                                        <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-1.5 text-sm has-checked:border-blue-500 has-checked:bg-blue-50 has-checked:text-blue-800">
+                                            <input type="radio" name="{{ $bagian['kolom'] }}" value="{{ $kunci }}" x-model="cara.{{ $bagian['kolom'] }}" class="size-4 accent-blue-600"> {{ $label }}
+                                        </label>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endforeach
                     </div>
+                    <p class="hint">Untuk anggota yang bayarnya campuran, misalnya simpanan wajib dan angsuran dipotong gaji tetapi manasuka disetor langsung. Simpanan pokok selalu disetor langsung.</p>
+                    @error('bayar_wajib') <p class="galat">{{ $message }}</p> @enderror
                 </div>
             </section>
 

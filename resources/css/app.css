@@ -50,7 +50,7 @@
 
     /* Kartu */
     .card {
-        @apply rounded-2xl border border-slate-200 bg-white;
+        @apply rounded-2xl border border-slate-200 bg-white shadow-md shadow-slate-300/40;
     }
     .card-head {
         @apply flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4;

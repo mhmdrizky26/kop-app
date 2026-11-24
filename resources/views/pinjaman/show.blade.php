@@ -52,7 +52,7 @@
         </div>
 
         <div class="space-y-6">
-            @if ($pinjaman->status === 'aktif')
+            @if ($pinjaman->status === 'aktif' && auth()->user()->can('ubah-data'))
                 <form method="POST" action="{{ route('pinjaman.bayar', $pinjaman) }}" class="card p-5">
                     @csrf
                     <h2 class="card-title">Bayar di luar tagihan</h2>
@@ -95,7 +95,7 @@
                     </span>
                     <x-icon name="right" class="size-4 text-slate-400" />
                 </a>
-                @if ($pinjaman->terbayar === 0 && $jasaDibayar === 0)
+                @if ($pinjaman->terbayar === 0 && $jasaDibayar === 0 && auth()->user()->can('ubah-data'))
                     <form method="POST" action="{{ route('pinjaman.destroy', $pinjaman) }}" class="mt-4" onsubmit="return confirm('Hapus pinjaman ini? Tindakan ini tidak bisa dibatalkan.')">
                         @csrf @method('DELETE')
                         <button class="btn btn-danger btn-sm"><x-icon name="trash" class="size-3.5" /> Hapus pinjaman (salah input)</button>

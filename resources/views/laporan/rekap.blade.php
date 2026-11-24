@@ -5,7 +5,7 @@
 
 @section('aksi')
     @include('partials.pilih-bulan', ['rute' => 'laporan.rekap'])
-    <button type="button" onclick="window.print()" class="btn btn-ghost">Cetak</button>
+    @include('partials.ekspor-laporan', ['rute' => 'laporan.rekap'])
 @endsection
 
 @section('isi')

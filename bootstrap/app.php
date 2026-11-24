@@ -17,7 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
         $middleware->alias(['peran' => Peran::class]);
         $middleware->redirectGuestsTo(fn () => route('login'));
-        $middleware->redirectUsersTo(fn (Request $request) => route($request->user()?->isPengurus() ? 'dashboard' : 'portal'));
+        $middleware->redirectUsersTo(fn (Request $request) => route($request->user()?->halamanAwal() ?? 'login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

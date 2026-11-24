@@ -4,8 +4,7 @@
 @section('keterangan', 'Tahun buku '.$tahun->nama.' ('.$tahun->mulai->translatedFormat('F Y').' sampai '.$tahun->selesai->translatedFormat('F Y').'), dihitung sampai hari ini.')
 
 @section('aksi')
-    <a href="{{ route('pengaturan.edit') }}" class="btn btn-ghost"><x-icon name="settings" class="size-4" /> Ubah persentase</a>
-    <button type="button" onclick="window.print()" class="btn btn-ghost">Cetak</button>
+    @include('partials.ekspor-laporan', ['rute' => 'laporan.shu'])
 @endsection
 
 @section('isi')

@@ -3,7 +3,7 @@
     <div class="card-head">
         <div>
             <h2 class="card-title">Buku tabungan</h2>
-            <p class="mt-0.5 text-xs text-slate-500">Tahun buku {{ $tahun->nama }}, satu baris per bulan</p>
+            <p class="mt-0.5 text-xs text-slate-500">Tahun buku {{ $tahun->nama }}, saldo awal {{ $buku['bulanAwal']->translatedFormat('F Y') }} lalu satu baris per bulan</p>
         </div>
     </div>
     <div class="overflow-x-auto">
@@ -11,6 +11,7 @@
             <thead>
                 <tr>
                     <th rowspan="2" class="align-bottom">Bulan</th>
+                    <th rowspan="2" class="num border-l border-slate-100 align-bottom">Simpanan pokok</th>
                     <th colspan="3" class="border-l border-slate-100 text-center!">Simpanan wajib</th>
                     <th colspan="3" class="border-l border-slate-100 text-center!">Simpanan manasuka</th>
                     <th colspan="4" class="border-l border-slate-100 text-center!">Pinjaman</th>
@@ -22,32 +23,48 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td class="text-slate-500">Saldo awal</td>
-                    <td class="num border-l border-slate-100" colspan="3">{{ rupiah($buku['awal']['wajib'], false) }}</td>
-                    <td class="num border-l border-slate-100" colspan="3">{{ rupiah($buku['awal']['manasuka'], false) }}</td>
-                    <td class="num border-l border-slate-100" colspan="3">{{ rupiah($buku['awal']['pinjaman'], false) }}</td>
+                <tr class="bg-slate-50/60">
+                    <td class="whitespace-nowrap">
+                        <span class="font-medium text-slate-900">{{ $buku['bulanAwal']->translatedFormat('F Y') }}</span>
+                        <span class="block text-xs text-slate-500">Saldo awal</span>
+                    </td>
+                    <td class="num border-l border-slate-100 font-medium text-slate-900">{{ rupiah($buku['awal']['pokok'], false) }}</td>
+                    <td class="num border-l border-slate-100 font-medium text-slate-900" colspan="3">{{ rupiah($buku['awal']['wajib'], false) }}</td>
+                    <td class="num border-l border-slate-100 font-medium text-slate-900" colspan="3">{{ rupiah($buku['awal']['manasuka'], false) }}</td>
+                    <td class="num border-l border-slate-100 font-medium text-slate-900" colspan="3">{{ rupiah($buku['awal']['pinjaman'], false) }}</td>
                     <td></td>
                 </tr>
                 @foreach ($buku['baris'] as $b)
-                    <tr @class(['text-slate-400' => ! $b['ada']])>
-                        <td class="font-medium whitespace-nowrap text-slate-900">{{ $b['bulan']->translatedFormat('F Y') }}</td>
-                        <td class="num border-l border-slate-100">{{ angka($b['wajib_masuk']) }}</td>
-                        <td class="num">{{ angka($b['wajib_keluar']) }}</td>
-                        <td class="num font-medium text-slate-900">{{ rupiah($b['wajib'], false) }}</td>
-                        <td class="num border-l border-slate-100">{{ angka($b['manasuka_masuk']) }}</td>
-                        <td class="num">{{ angka($b['manasuka_keluar']) }}</td>
-                        <td class="num font-medium text-slate-900">{{ rupiah($b['manasuka'], false) }}</td>
-                        <td class="num border-l border-slate-100">{{ angka($b['pinjaman_baru']) }}</td>
-                        <td class="num">{{ angka($b['angsuran']) }}</td>
-                        <td class="num font-medium text-slate-900">{{ rupiah($b['pinjaman'], false) }}</td>
-                        <td class="num">{{ angka($b['jasa']) }}</td>
-                    </tr>
+                    @if ($b['mendatang'])
+                        <tr class="text-slate-300">
+                            <td class="font-medium whitespace-nowrap text-slate-400">{{ $b['bulan']->translatedFormat('F Y') }}</td>
+                            <td class="border-l border-slate-100"></td>
+                            <td class="border-l border-slate-100"></td><td></td><td></td>
+                            <td class="border-l border-slate-100"></td><td></td><td></td>
+                            <td class="border-l border-slate-100"></td><td></td><td></td><td></td>
+                        </tr>
+                    @else
+                        <tr @class(['text-slate-400' => ! $b['ada']])>
+                            <td class="font-medium whitespace-nowrap text-slate-900">{{ $b['bulan']->translatedFormat('F Y') }}</td>
+                            <td class="num border-l border-slate-100 font-medium text-slate-900">{{ rupiah($b['pokok'], false) }}</td>
+                            <td class="num border-l border-slate-100">{{ angka($b['wajib_masuk']) }}</td>
+                            <td class="num">{{ angka($b['wajib_keluar']) }}</td>
+                            <td class="num font-medium text-slate-900">{{ rupiah($b['wajib'], false) }}</td>
+                            <td class="num border-l border-slate-100">{{ angka($b['manasuka_masuk']) }}</td>
+                            <td class="num">{{ angka($b['manasuka_keluar']) }}</td>
+                            <td class="num font-medium text-slate-900">{{ rupiah($b['manasuka'], false) }}</td>
+                            <td class="num border-l border-slate-100">{{ angka($b['pinjaman_baru']) }}</td>
+                            <td class="num">{{ angka($b['angsuran']) }}</td>
+                            <td class="num font-medium text-slate-900">{{ rupiah($b['pinjaman'], false) }}</td>
+                            <td class="num">{{ angka($b['jasa']) }}</td>
+                        </tr>
+                    @endif
                 @endforeach
             </tbody>
             <tfoot>
                 <tr>
                     <td>Jumlah</td>
+                    <td class="num border-l border-slate-100">{{ rupiah($buku['akhir']['pokok'], false) }}</td>
                     <td class="num border-l border-slate-100">{{ angka($buku['jumlah']['wajib_masuk']) }}</td>
                     <td class="num">{{ angka($buku['jumlah']['wajib_keluar']) }}</td>
                     <td class="num">{{ rupiah($buku['akhir']['wajib'], false) }}</td>

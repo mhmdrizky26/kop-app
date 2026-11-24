@@ -4,7 +4,9 @@
 @section('keterangan', now()->translatedFormat('l, j F Y'))
 
 @section('aksi')
-    <a href="{{ route('transaksi.create') }}" class="btn btn-ghost"><x-icon name="plus" class="size-4" /> Setor / tarik</a>
+    @can('ubah-data')
+        <a href="{{ route('transaksi.create') }}" class="btn btn-ghost"><x-icon name="plus" class="size-4" /> Penarikan</a>
+    @endcan
     <a href="{{ route('tagihan.index') }}" class="btn btn-primary"><x-icon name="clipboard" class="size-4" /> Tagihan bulan ini</a>
 @endsection
 
@@ -59,7 +61,7 @@
             <div class="flex flex-1 flex-col p-5">
                 <div class="flex items-baseline gap-2">
                     <span class="text-3xl font-semibold tracking-tight text-slate-900 tabular-nums">{{ $sudahBayar }}</span>
-                    <span class="text-sm text-slate-500">dari {{ $jumlahAnggota }} anggota sudah bayar</span>
+                    <span class="text-sm text-slate-500">dari {{ $jumlahAnggota }} anggota sudah lunas</span>
                 </div>
                 <div class="mt-4 h-2 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-valuenow="{{ $persen }}" aria-valuemin="0" aria-valuemax="100">
                     <div class="h-full rounded-full bg-blue-600" style="width: {{ $persen }}%"></div>
@@ -84,7 +86,7 @@
                     <span class="avatar">{{ $b['anggota']->inisial }}</span>
                     <div class="min-w-0 flex-1">
                         <p class="truncate text-sm font-medium text-slate-900">{{ $b['anggota']->nama }}</p>
-                        <p class="text-xs text-slate-500">{{ $b['anggota']->potong_gaji ? 'Potong gaji' : 'Setor langsung' }}</p>
+                        <p class="text-xs text-slate-500">{{ $b['anggota']->label_cara_bayar }}{{ $b['status'] === 'sebagian' ? ' · Baru dibayar sebagian' : '' }}</p>
                     </div>
                     <span class="shrink-0 text-sm font-medium whitespace-nowrap text-slate-900 tabular-nums">{{ rupiah($b['total']) }}</span>
                 </a>

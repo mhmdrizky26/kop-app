@@ -22,6 +22,23 @@ class TahunBuku extends Model
         'shu_dana_sosial' => 'Dana sosial',
     ];
 
+    /** Saldo awal pos neraca yang tidak berasal dari transaksi anggota: kolom => nama di neraca. */
+    public const SALDO_AWAL_NERACA = [
+        'awal_dana_sosial' => 'Dana sosial',
+        'awal_cadangan' => 'Cadangan',
+        'awal_modal_warung' => 'Modal warung KGB',
+        'awal_pinjaman_luar' => 'Pinjaman di luar anggota',
+        'awal_paket_munggahan' => 'Pinjaman paket munggahan',
+    ];
+
+    /** Pengesah laporan cetak dan export: kolom => jabatan. */
+    public const PENGESAH = [
+        'nama_ketua' => 'Ketua',
+        'nama_bendahara' => 'Bendahara',
+        'nama_pemeriksa_1' => 'Badan pemeriksa 1',
+        'nama_pemeriksa_2' => 'Badan pemeriksa 2',
+    ];
+
     protected function casts(): array
     {
         return [

@@ -1,6 +1,12 @@
 @php
     // Menu samping: [judul kelompok => [[nama rute, pola rute aktif, label, ikon], ...]]
-    $menu = [
+    // Admin hanya mengatur akun dan aplikasi; pengurus (editor dan lihat saja) mengurus data dan laporan.
+    $menu = auth()->user()->isAdmin() ? [
+        'Sistem' => [
+            ['pengaturan.edit', 'pengaturan.*', 'Pengaturan', 'settings'],
+            ['akun.index', 'akun.*', 'Akun Pengurus', 'lock'],
+        ],
+    ] : [
         'Utama' => [['dashboard', 'dashboard', 'Beranda', 'home']],
         'Kegiatan' => [
             ['tagihan.index', 'tagihan.*', 'Tagihan Bulanan', 'clipboard'],
@@ -9,13 +15,14 @@
         ],
         'Data' => [
             ['anggota.index', 'anggota.*', 'Anggota', 'users'],
+            ['inventaris.index', 'inventaris.*', 'Inventaris', 'box'],
             ['kas.index', 'kas.*', 'Kas Lain-lain', 'wallet'],
         ],
         'Laporan' => [
             ['laporan.rekap', 'laporan.rekap', 'Rekap Bulanan', 'chart'],
             ['laporan.shu', 'laporan.shu', 'SHU & Posisi Keuangan', 'pie'],
+            ['laporan.neraca', 'laporan.neraca', 'Neraca', 'scale'],
         ],
-        'Sistem' => [['pengaturan.edit', 'pengaturan.*', 'Pengaturan', 'settings']],
     ];
     $tahunAktif = \App\Models\TahunBuku::where('aktif', true)->latest('mulai')->first();
 @endphp
@@ -27,14 +34,14 @@
     <title>@yield('judul', 'Beranda') · {{ config('app.name') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-slate-50 font-sans text-slate-800 antialiased" x-data="{ menu: false }" :class="menu && 'max-lg:overflow-hidden'" @keydown.escape.window="menu = false">
+<body class="bg-slate-50 font-sans text-slate-800 antialiased" x-data="{ menu: false, profil: @js($errors->profil->any()) }" :class="menu && 'max-lg:overflow-hidden'" @keydown.escape.window="menu = false; profil = false">
     {{-- Latar gelap saat menu dibuka di layar kecil --}}
     <div x-show="menu" x-cloak x-transition.opacity class="fixed inset-0 z-30 bg-slate-900/30 lg:hidden" @click="menu = false"></div>
 
     <aside class="fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-slate-200 bg-white -translate-x-full transition-transform duration-200 lg:translate-x-0 print:hidden"
         :class="menu && 'translate-x-0!'">
         <div class="flex h-16 items-center gap-2 pr-3">
-            <a href="{{ route('dashboard') }}" class="flex min-w-0 flex-1 items-center gap-3 px-5">
+            <a href="{{ route(auth()->user()->halamanAwal()) }}" class="flex min-w-0 flex-1 items-center gap-3 px-5">
                 <x-logo />
                 <span class="min-w-0 leading-tight">
                     <span class="block truncate text-sm font-semibold text-slate-900">{{ config('app.name') }}</span>
@@ -64,12 +71,15 @@
         </nav>
 
         <div class="border-t border-slate-100 p-3">
-            <div class="flex items-center gap-3 rounded-lg px-2 py-2">
-                <span class="avatar">{{ mb_strtoupper(mb_substr(auth()->user()->name, 0, 1)) }}</span>
-                <div class="min-w-0 flex-1 leading-tight">
-                    <p class="truncate text-sm font-medium text-slate-900">{{ auth()->user()->name }}</p>
-                    <p class="text-xs text-slate-500">Pengurus</p>
-                </div>
+            <div class="flex items-center gap-1">
+                <button type="button" title="Profil saya" @click="profil = true; menu = false"
+                    class="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-left transition hover:bg-slate-50">
+                    <span class="avatar">{{ mb_strtoupper(mb_substr(auth()->user()->name, 0, 1)) }}</span>
+                    <span class="min-w-0 flex-1 leading-tight">
+                        <span class="block truncate text-sm font-medium text-slate-900">{{ auth()->user()->name }}</span>
+                        <span class="block text-xs text-slate-500">{{ auth()->user()->label_peran }} · Profil</span>
+                    </span>
+                </button>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button class="flex size-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700" title="Keluar" aria-label="Keluar">
@@ -79,6 +89,8 @@
             </div>
         </div>
     </aside>
+
+    @include('partials.profil')
 
     <div class="min-w-0 lg:pl-64 print:pl-0">
         <header class="z-20 border-b border-slate-200 bg-white/85 backdrop-blur lg:sticky lg:top-0">

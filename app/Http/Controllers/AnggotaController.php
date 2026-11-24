@@ -51,7 +51,7 @@ class AnggotaController extends Controller
             $anggota = Anggota::create($data + ['nomor' => Anggota::nomorBerikutnya()]);
 
             User::create([
-                'name' => $anggota->nama, 'username' => $anggota->kode,
+                'name' => $anggota->nama, 'username' => User::namaPenggunaUnik($anggota->nama),
                 'password' => Str::random(40), 'role' => 'anggota', 'anggota_id' => $anggota->id,
             ]);
 
@@ -69,7 +69,7 @@ class AnggotaController extends Controller
         });
 
         return redirect()->route('anggota.show', $anggota)
-            ->with('sukses', "Anggota baru tersimpan. ID anggota: {$anggota->kode}. Anggota masuk dengan ID ini.");
+            ->with('sukses', "Anggota baru tersimpan. Nama pengguna untuk masuk: {$anggota->user->username}.");
     }
 
     public function show(Anggota $anggota)
@@ -94,12 +94,21 @@ class AnggotaController extends Controller
     {
         $data = $this->validasi($request, $anggota);
 
-        DB::transaction(function () use ($anggota, $data) {
+        $namaLama = $anggota->nama;
+        DB::transaction(function () use ($anggota, $data, $namaLama) {
             $anggota->update($data);
-            $anggota->user?->update(['name' => $anggota->nama]);
+            $user = $anggota->user;
+            // Nama pengguna mengikuti nama; hanya dibuat ulang jika namanya berubah.
+            $user?->update(['name' => $anggota->nama] + ($anggota->nama !== $namaLama
+                ? ['username' => User::namaPenggunaUnik($anggota->nama, $user->id)]
+                : []));
         });
 
-        return redirect()->route('anggota.show', $anggota)->with('sukses', 'Data anggota diperbarui.');
+        $pesan = $anggota->nama !== $namaLama
+            ? 'Data anggota diperbarui. Nama pengguna untuk masuk sekarang: '.$anggota->user?->username.'.'
+            : 'Data anggota diperbarui.';
+
+        return redirect()->route('anggota.show', $anggota)->with('sukses', $pesan);
     }
 
     private function validasi(Request $request, ?Anggota $anggota = null): array
@@ -110,14 +119,14 @@ class AnggotaController extends Controller
             'no_hp' => ['nullable', 'string', 'max:30'],
             'tanggal_masuk' => ['required', 'date'],
             'status' => ['nullable', Rule::in(['aktif', 'keluar'])],
-            'cara_bayar' => ['required', Rule::in(['potong_gaji', 'setor'])],
+            'bayar_wajib' => ['required', Rule::in(array_keys(Transaksi::METODE))],
+            'bayar_manasuka' => ['required', Rule::in(array_keys(Transaksi::METODE))],
+            'bayar_pinjaman' => ['required', Rule::in(array_keys(Transaksi::METODE))],
             'setoran_manasuka' => ['nullable', 'integer', 'min:0'],
         ]);
 
-        $data['potong_gaji'] = $data['cara_bayar'] === 'potong_gaji';
         $data['setoran_manasuka'] = (int) ($data['setoran_manasuka'] ?? 0);
         $data['status'] ??= 'aktif';
-        unset($data['cara_bayar']);
 
         return $data;
     }

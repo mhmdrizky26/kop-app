@@ -12,55 +12,88 @@
     </div>
 
     <div class="mt-6">
-        @include('partials.saldo-kartu', ['saldo' => $buku['akhir']])
+        @include('partials.saldo-kartu', ['saldo' => $buku['akhir'], 'denganPinjaman' => false])
     </div>
 
     <div class="mt-6 grid gap-6 lg:grid-cols-2">
         {{-- Tagihan bulan ini --}}
-        <div class="card p-5">
+        <div class="card flex flex-col p-5">
+            @php
+                $status = $sisa['status'];
+                $posTagihan = ['pokok' => 'Simpanan pokok', 'wajib' => 'Simpanan wajib', 'manasuka' => 'Simpanan manasuka', 'angsuran' => 'Angsuran pinjaman', 'jasa' => 'Jasa pinjaman'];
+                $dibayar = $bayar['total'] ?? 0;
+            @endphp
             <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
                 <h2 class="card-title">Tagihan {{ $periode->translatedFormat('F Y') }}</h2>
-                @if ($bayar)
-                    <span class="badge badge-green"><x-icon name="check" class="size-3" /> Sudah dibayar {{ $bayar['tanggal']->translatedFormat('j M') }}</span>
+                @if ($status === 'lunas')
+                    <span class="badge badge-green"><x-icon name="check" class="size-3" /> Lunas</span>
+                @elseif ($status === 'sebagian')
+                    <span class="badge badge-amber">Dibayar sebagian</span>
                 @else
                     <span class="badge badge-amber">Belum dibayar</span>
                 @endif
             </div>
-            @php $rincian = $bayar ?? $tagihan; @endphp
-            <dl class="mt-4 space-y-2.5 text-sm">
-                <div class="flex justify-between"><dt class="text-slate-500">Simpanan wajib</dt><dd class="font-medium text-slate-900 tabular-nums">{{ rupiah($rincian['wajib']) }}</dd></div>
-                @if ($rincian['manasuka'] > 0)
-                    <div class="flex justify-between"><dt class="text-slate-500">Simpanan manasuka</dt><dd class="font-medium text-slate-900 tabular-nums">{{ rupiah($rincian['manasuka']) }}</dd></div>
-                @endif
-                @if ($rincian['angsuran'] + $rincian['jasa'] > 0)
-                    <div class="flex justify-between"><dt class="text-slate-500">Angsuran pinjaman</dt><dd class="font-medium text-slate-900 tabular-nums">{{ rupiah($rincian['angsuran']) }}</dd></div>
-                    <div class="flex justify-between"><dt class="text-slate-500">Jasa pinjaman</dt><dd class="font-medium text-slate-900 tabular-nums">{{ rupiah($rincian['jasa']) }}</dd></div>
-                @endif
-                <div class="flex justify-between border-t border-slate-100 pt-2.5 font-semibold text-slate-900"><dt>Total</dt><dd class="tabular-nums">{{ rupiah($rincian['total']) }}</dd></div>
+            <dl class="mt-4 space-y-3 text-sm">
+                @foreach ($posTagihan as $pos => $label)
+                    @php $nilai = max($tagihan[$pos], $bayar[$pos] ?? 0); @endphp
+                    @continue($nilai === 0)
+                    @php
+                        $rincian = $bayar['rincian'][$pos] ?? null;
+                        $lunasPos = $sisa[$pos] === 0;
+                    @endphp
+                    <div class="flex justify-between gap-3">
+                        <dt>
+                            <span class="text-slate-500">{{ $label }}</span>
+                            @if ($lunasPos && $rincian)
+                                <span class="flex items-center gap-1 text-xs text-emerald-700"><x-icon name="check" class="size-3" /> {{ collect($rincian['metode'])->map(fn ($m) => \App\Models\Transaksi::METODE[$m] ?? $m)->join(' + ') }} · {{ $rincian['tanggal']->translatedFormat('j M') }}</span>
+                            @else
+                                <span class="block text-xs text-amber-700">Belum · {{ \App\Models\Transaksi::METODE[$anggota->caraBayar($pos)] ?? 'Setor langsung' }}</span>
+                            @endif
+                        </dt>
+                        <dd class="font-medium text-slate-900 tabular-nums">{{ rupiah($nilai) }}</dd>
+                    </div>
+                @endforeach
+                <div class="flex justify-between border-t border-slate-100 pt-2.5 font-semibold text-slate-900"><dt>Total</dt><dd class="tabular-nums">{{ rupiah(max($tagihan['total'], $dibayar)) }}</dd></div>
             </dl>
-            <p class="hint">{{ $anggota->potong_gaji ? 'Dibayar lewat potong gaji.' : 'Dibayar dengan setor langsung ke bendahara.' }}</p>
+
+            {{-- Ringkasan pembayaran, menempel di bawah supaya kartu terisi penuh saat sejajar dengan kartu pinjaman --}}
+            <div class="mt-auto pt-5">
+                <dl class="space-y-2.5 rounded-lg bg-slate-50 p-4 text-sm">
+                    <div class="flex justify-between gap-3"><dt class="text-slate-500">Sudah dibayar</dt><dd class="font-medium text-emerald-700 tabular-nums">{{ rupiah($dibayar) }}</dd></div>
+                    <div class="flex justify-between gap-3"><dt class="text-slate-500">Belum dibayar</dt><dd @class(['font-medium tabular-nums', 'text-amber-700' => $sisa['total'] > 0, 'text-slate-900' => $sisa['total'] === 0])>{{ rupiah($sisa['total']) }}</dd></div>
+                    <div class="flex justify-between gap-3"><dt class="text-slate-500">Cara bayar</dt><dd class="font-medium text-slate-900">{{ $anggota->label_cara_bayar }}</dd></div>
+                </dl>
+            </div>
         </div>
 
-        {{-- Perkiraan SHU dan pinjaman --}}
+        {{-- Pinjaman aktif --}}
         <div class="space-y-6">
-            <div class="card p-5">
-                <h2 class="card-title">Perkiraan bagian SHU</h2>
-                <p class="mt-2 text-2xl font-semibold tracking-tight text-slate-900 tabular-nums">{{ rupiah($shu['total'] ?? 0) }}</p>
-                <p class="hint">Dihitung sampai hari ini. Angka akhir ditetapkan saat Rapat Anggota Tahunan.</p>
-            </div>
-
-            @foreach ($pinjaman->where('status', 'aktif') as $p)
+            @forelse ($pinjaman->where('status', 'aktif') as $p)
                 <div class="card p-5">
-                    <div class="flex items-center justify-between gap-3">
+                    <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
                         <h2 class="card-title">Pinjaman {{ $p->tanggal->translatedFormat('F Y') }}</h2>
                         <span class="badge badge-blue">{{ $p->persen_lunas }}% terbayar</span>
                     </div>
-                    <p class="mt-2 text-2xl font-semibold tracking-tight text-slate-900 tabular-nums">{{ rupiah($p->sisa) }}</p>
-                    <p class="text-xs text-slate-500">sisa dari pinjaman {{ rupiah($p->pokok) }}</p>
+                    <p class="mt-3 text-xs text-slate-500">Sisa pinjaman</p>
+                    <p class="text-2xl font-semibold tracking-tight text-slate-900 tabular-nums">{{ rupiah($p->sisa) }}</p>
                     <div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full bg-blue-600" style="width: {{ $p->persen_lunas }}%"></div></div>
-                    <p class="hint">Angsuran {{ rupiah($p->tagihan_angsuran) }} ditambah jasa {{ rupiah($p->tagihan_jasa) }} per bulan.</p>
+                    <dl class="mt-4 space-y-2.5 text-sm">
+                        <div class="flex justify-between"><dt class="text-slate-500">Tanggal pinjam</dt><dd class="font-medium text-slate-900">{{ $p->tanggal->translatedFormat('j F Y') }}</dd></div>
+                        <div class="flex justify-between"><dt class="text-slate-500">Pokok pinjaman</dt><dd class="font-medium text-slate-900 tabular-nums">{{ rupiah($p->pokok) }}</dd></div>
+                        <div class="flex justify-between"><dt class="text-slate-500">Sudah dibayar</dt><dd class="font-medium text-slate-900 tabular-nums">{{ rupiah($p->terbayar) }}</dd></div>
+                        <div class="flex justify-between"><dt class="text-slate-500">Lama pinjaman</dt><dd class="font-medium text-slate-900">{{ $p->tenor }} bulan</dd></div>
+                        <div class="flex justify-between"><dt class="text-slate-500">Jasa</dt><dd class="font-medium text-slate-900">{{ rtrim(rtrim(number_format($p->jasa_persen, 2, ',', '.'), '0'), ',') }}% per bulan, {{ $p->jasa_metode === 'menurun' ? 'menurun' : 'tetap' }}</dd></div>
+                        <div class="flex justify-between border-t border-slate-100 pt-2.5"><dt class="text-slate-500">Angsuran pokok / bulan</dt><dd class="font-medium text-slate-900 tabular-nums">{{ rupiah($p->tagihan_angsuran) }}</dd></div>
+                        <div class="flex justify-between"><dt class="text-slate-500">Jasa / bulan</dt><dd class="font-medium text-slate-900 tabular-nums">{{ rupiah($p->tagihan_jasa) }}</dd></div>
+                        <div class="flex justify-between font-semibold text-slate-900"><dt>Total / bulan</dt><dd class="tabular-nums">{{ rupiah($p->tagihan_angsuran + $p->tagihan_jasa) }}</dd></div>
+                    </dl>
                 </div>
-            @endforeach
+            @empty
+                <div class="card flex h-full flex-col items-center justify-center p-5 text-center">
+                    <h2 class="card-title">Pinjaman</h2>
+                    <p class="mt-2 text-sm text-slate-500">Tidak ada pinjaman aktif.</p>
+                </div>
+            @endforelse
         </div>
     </div>
 

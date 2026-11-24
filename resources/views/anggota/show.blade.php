@@ -1,11 +1,13 @@
 @extends('layouts.app')
 
 @section('judul', $anggota->nama)
-@section('keterangan', $anggota->kode.($anggota->jabatan ? ' · '.$anggota->jabatan : '').' · '.($anggota->potong_gaji ? 'Potong gaji' : 'Setor langsung').($anggota->status === 'keluar' ? ' · Sudah keluar' : ''))
+@section('keterangan', $anggota->kode.($anggota->jabatan ? ' · '.$anggota->jabatan : '').' · '.$anggota->label_cara_bayar.($anggota->status === 'keluar' ? ' · Sudah keluar' : ''))
 
 @section('aksi')
-    <a href="{{ route('anggota.edit', $anggota) }}" class="btn btn-ghost"><x-icon name="edit" class="size-4" /> Ubah data</a>
-    <a href="{{ route('transaksi.create', ['anggota' => $anggota->id]) }}" class="btn btn-primary"><x-icon name="plus" class="size-4" /> Setor / tarik</a>
+    @can('ubah-data')
+        <a href="{{ route('anggota.edit', $anggota) }}" class="btn btn-ghost"><x-icon name="edit" class="size-4" /> Ubah data</a>
+        <a href="{{ route('transaksi.create', ['anggota' => $anggota->id]) }}" class="btn btn-primary"><x-icon name="plus" class="size-4" /> Penarikan</a>
+    @endcan
 @endsection
 
 @section('isi')
@@ -19,7 +21,9 @@
         <div class="card">
             <div class="card-head">
                 <h2 class="card-title">Pinjaman</h2>
-                <a href="{{ route('pinjaman.create', ['anggota' => $anggota->id]) }}" class="text-sm font-medium text-blue-700 hover:text-blue-900">Pinjaman baru</a>
+                @can('ubah-data')
+                    <a href="{{ route('pinjaman.create', ['anggota' => $anggota->id]) }}" class="text-sm font-medium text-blue-700 hover:text-blue-900">Pinjaman baru</a>
+                @endcan
             </div>
             @forelse ($pinjaman as $p)
                 <a href="{{ route('pinjaman.show', $p) }}" class="block border-t border-slate-100 px-5 py-4 first:border-t-0 hover:bg-blue-50/30">
@@ -53,8 +57,8 @@
     <div class="card mt-6 flex flex-wrap items-center justify-between gap-4 p-5">
         <div>
             <h2 class="card-title">Login anggota</h2>
-            <p class="mt-1 text-sm text-slate-500">ID anggota: <span class="font-mono text-base font-semibold tracking-wider text-slate-900">{{ $anggota->kode }}</span></p>
-            <p class="mt-1 text-xs text-slate-500">Anggota masuk cukup dengan ID ini, hanya untuk melihat datanya sendiri.</p>
+            <p class="mt-1 text-sm text-slate-500">Nama pengguna: <span class="font-mono text-base font-semibold text-slate-900">{{ $anggota->user?->username }}</span></p>
+            <p class="mt-1 text-xs text-slate-500">Anggota masuk cukup dengan nama pengguna ini, hanya untuk melihat datanya sendiri.</p>
         </div>
     </div>
 @endsection

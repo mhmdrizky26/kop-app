@@ -13,13 +13,26 @@ class Anggota extends Model
 
     protected $table = 'anggota';
 
+    /**
+     * Bagian tagihan yang cara bayarnya bisa diatur, beserta kolom pengaturannya.
+     * Angsuran dan jasa pinjaman selalu dibayar dengan cara yang sama.
+     *
+     * @var array<string, array{kolom: string, label: string}>
+     */
+    public const CARA_BAYAR_BAGIAN = [
+        'wajib' => ['kolom' => 'bayar_wajib', 'label' => 'Simpanan wajib'],
+        'manasuka' => ['kolom' => 'bayar_manasuka', 'label' => 'Simpanan manasuka'],
+        'pinjaman' => ['kolom' => 'bayar_pinjaman', 'label' => 'Angsuran + jasa pinjaman'],
+    ];
+
     protected $fillable = [
-        'nomor', 'nama', 'jabatan', 'no_hp', 'status', 'tanggal_masuk', 'potong_gaji', 'setoran_manasuka',
+        'nomor', 'nama', 'jabatan', 'no_hp', 'status', 'tanggal_masuk', 'setoran_manasuka',
+        'bayar_wajib', 'bayar_manasuka', 'bayar_pinjaman',
     ];
 
     protected function casts(): array
     {
-        return ['tanggal_masuk' => 'date', 'potong_gaji' => 'boolean'];
+        return ['tanggal_masuk' => 'date'];
     }
 
     public function transaksi(): HasMany
@@ -47,7 +60,32 @@ class Anggota extends Model
         return $query->where('status', 'aktif');
     }
 
-    /** ID anggota yang dipakai di semua tampilan dan untuk login, misalnya "KGB001". */
+    /** Cara bayar bawaan (potong_gaji atau setor) untuk satu pos tagihan: pokok, wajib, manasuka, angsuran, jasa. */
+    public function caraBayar(string $pos): string
+    {
+        return match ($pos) {
+            'wajib' => $this->bayar_wajib,
+            'manasuka' => $this->bayar_manasuka,
+            'angsuran', 'jasa' => $this->bayar_pinjaman,
+            default => 'setor',
+        } ?? 'setor';
+    }
+
+    /** Ringkasan cara bayar untuk ditampilkan: "Potong gaji", "Setor langsung", atau "Campuran". */
+    public function getLabelCaraBayarAttribute(): string
+    {
+        $cara = array_unique([$this->bayar_wajib, $this->bayar_manasuka, $this->bayar_pinjaman]);
+
+        return count($cara) > 1 ? 'Campuran' : (Transaksi::METODE[$cara[0]] ?? 'Setor langsung');
+    }
+
+    /** True jika ada bagian tagihan yang dibayar lewat potong gaji. */
+    public function getAdaPotongGajiAttribute(): bool
+    {
+        return in_array('potong_gaji', [$this->bayar_wajib, $this->bayar_manasuka, $this->bayar_pinjaman], true);
+    }
+
+    /** ID anggota yang dipakai di semua tampilan, misalnya "KGB001". Untuk masuk, anggota memakai nama pengguna dari namanya. */
     public function getKodeAttribute(): string
     {
         return static::kodeDariNomor($this->nomor);

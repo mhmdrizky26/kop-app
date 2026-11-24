@@ -4,7 +4,9 @@
 @section('keterangan', 'Klik nama anggota untuk membuka buku tabungannya.')
 
 @section('aksi')
-    <a href="{{ route('anggota.create') }}" class="btn btn-primary"><x-icon name="plus" class="size-4" /> Anggota baru</a>
+    @can('ubah-data')
+        <a href="{{ route('anggota.create') }}" class="btn btn-primary"><x-icon name="plus" class="size-4" /> Anggota baru</a>
+    @endcan
 @endsection
 
 @section('isi')
@@ -58,7 +60,7 @@
                                     @if ($a->status === 'keluar') <span class="badge badge-slate">Keluar</span> @endif
                                 </a>
                             </td>
-                            <td data-label="Cara bayar"><span @class(['badge', 'badge-blue' => $a->potong_gaji, 'badge-slate' => ! $a->potong_gaji])>{{ $a->potong_gaji ? 'Potong gaji' : 'Setor langsung' }}</span></td>
+                            <td data-label="Cara bayar"><span @class(['badge', 'badge-blue' => $a->label_cara_bayar === 'Potong gaji', 'badge-amber' => $a->label_cara_bayar === 'Campuran', 'badge-slate' => $a->label_cara_bayar === 'Setor langsung'])>{{ $a->label_cara_bayar }}</span></td>
                             <td class="num" data-label="Simpanan wajib">{{ rupiah($s['wajib'], false) }}</td>
                             <td class="num" data-label="Simpanan manasuka">{{ angka($s['manasuka']) }}</td>
                             <td class="num font-semibold text-slate-900" data-label="Total simpanan">{{ rupiah($s['simpanan'], false) }}</td>

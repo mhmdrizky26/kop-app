@@ -13,7 +13,8 @@ class PortalController extends Controller
         $anggota = $request->user()->anggota()->with('pinjamanAktif')->firstOrFail();
         $tahun = $this->tahun();
         $periode = now()->startOfMonth();
-        $bayar = Keuangan::pembayaran($periode)[$anggota->id] ?? null;
+        $bayar = Keuangan::pembayaran($periode, $anggota->id)->first();
+        $tagihan = Keuangan::tagihan($anggota, $tahun, $periode);
 
         return view('portal.index', [
             'anggota' => $anggota,
@@ -23,8 +24,8 @@ class PortalController extends Controller
             'pinjaman' => $anggota->pinjaman()->denganTerbayar()->latest('tanggal')->get(),
             'transaksi' => $anggota->transaksi()->latest('tanggal')->latest('id')->limit(8)->get(),
             'bayar' => $bayar,
-            'tagihan' => $bayar ? null : Keuangan::tagihan($anggota, $tahun, $periode),
-            'shu' => Keuangan::shu($tahun)['perAnggota'][$anggota->id] ?? null,
+            'tagihan' => $tagihan,
+            'sisa' => Keuangan::sisaTagihan($tagihan, $bayar),
         ]);
     }
 }

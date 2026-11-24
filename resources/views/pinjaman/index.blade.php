@@ -4,7 +4,9 @@
 @section('keterangan', 'Angsuran dan jasa pinjaman aktif otomatis masuk ke tagihan bulanan.')
 
 @section('aksi')
-    <a href="{{ route('pinjaman.create') }}" class="btn btn-primary"><x-icon name="plus" class="size-4" /> Pinjaman baru</a>
+    @can('ubah-data')
+        <a href="{{ route('pinjaman.create') }}" class="btn btn-primary"><x-icon name="plus" class="size-4" /> Pinjaman baru</a>
+    @endcan
 @endsection
 
 @section('isi')

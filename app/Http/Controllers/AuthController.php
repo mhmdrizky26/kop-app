@@ -20,18 +20,18 @@ class AuthController extends Controller
         return view('auth.login-pengurus');
     }
 
-    /** Anggota cukup memasukkan ID login yang dibuatkan pengurus. */
+    /** Anggota cukup memasukkan nama penggunanya, misalnya "muhamad.rizky" (atau namanya, "Muhamad Rizky"). */
     public function login(Request $request)
     {
-        $data = $request->validate(['id_anggota' => ['required', 'string', 'max:20']]);
+        $data = $request->validate(['nama_pengguna' => ['required', 'string', 'max:100']]);
 
         $user = User::where('role', 'anggota')
-            ->where('username', User::rapikanIdAnggota($data['id_anggota']))
+            ->where('username', User::namaPenggunaDariNama($data['nama_pengguna']))
             ->first();
 
         if (! $user) {
             throw ValidationException::withMessages([
-                'id_anggota' => 'ID anggota tidak ditemukan. Periksa kembali atau tanyakan ke pengurus.',
+                'nama_pengguna' => 'Nama pengguna tidak ditemukan. Periksa kembali atau tanyakan ke pengurus.',
             ]);
         }
 
@@ -49,7 +49,10 @@ class AuthController extends Controller
         ]);
 
         $masuk = Auth::attempt(
-            ['username' => trim($data['username']), 'password' => $data['password'], 'role' => 'pengurus'],
+            [
+                'username' => trim($data['username']), 'password' => $data['password'],
+                fn ($query) => $query->whereIn('role', array_keys(User::PERAN_PENGURUS)),
+            ],
             $request->boolean('ingat')
         );
 
@@ -61,7 +64,7 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->route('dashboard');
+        return redirect()->route($request->user()->halamanAwal());
     }
 
     public function logout(Request $request)

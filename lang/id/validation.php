@@ -13,6 +13,7 @@ return [
     'exists' => ':Attribute yang dipilih tidak ditemukan.',
     'in' => ':Attribute yang dipilih tidak tersedia.',
     'unique' => ':Attribute sudah dipakai.',
+    'regex' => ':Attribute hanya boleh berisi huruf, angka, titik, tanda hubung, atau garis bawah.',
     'before_or_equal' => ':Attribute tidak boleh lebih dari hari ini.',
     'between' => [
         'numeric' => ':Attribute harus antara :min dan :max.',
@@ -27,8 +28,11 @@ return [
     ],
 
     'attributes' => [
-        'username' => 'nomor anggota',
-        'password' => 'PIN',
+        'username' => 'nama pengguna',
+        'nama_pengguna' => 'nama pengguna',
+        'name' => 'nama',
+        'password' => 'kata sandi',
+        'password_lama' => 'kata sandi lama',
         'anggota_id' => 'anggota',
         'nomor' => 'nomor anggota',
         'nama' => 'nama',

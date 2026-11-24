@@ -2,53 +2,41 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Anggota;
+use App\Services\DokumenLaporan;
+use App\Services\EksporLaporan;
 use App\Services\Keuangan;
 use Illuminate\Http\Request;
 
+/** Laporan di layar; dengan ?format=cetak|pdf|xlsx laporan yang sama dikirim dalam bentuk formal. */
 class LaporanController extends Controller
 {
     /** Rekap satu bulan: apa yang masuk dan keluar per anggota, dan saldonya di akhir bulan. */
     public function rekap(Request $request)
     {
         $periode = $this->periode($request);
-        $akhir = $periode->copy()->endOfMonth();
-
-        $mutasi = Keuangan::mutasi($periode, $akhir);
-        $saldo = Keuangan::saldo($akhir);
-
-        $kolom = ['wajib', 'manasuka', 'tarik', 'pinjaman_baru', 'angsuran', 'jasa', 'simpanan', 'pinjaman'];
-        $jumlah = array_fill_keys($kolom, 0);
-
-        $baris = [];
-        foreach (Anggota::orderBy('nomor')->get() as $a) {
-            $m = $mutasi[$a->id] ?? [];
-            $s = $saldo[$a->id] ?? null;
-            if ($a->status !== 'aktif' && $m === [] && (! $s || ($s['simpanan'] == 0 && $s['pinjaman'] == 0))) {
-                continue;
-            }
-            $b = [
-                'wajib' => $m['simpanan_wajib'] ?? 0,
-                'manasuka' => $m['simpanan_manasuka'] ?? 0,
-                'tarik' => ($m['tarik_wajib'] ?? 0) + ($m['tarik_manasuka'] ?? 0) + ($m['tarik_pokok'] ?? 0),
-                'pinjaman_baru' => $m['pinjaman'] ?? 0,
-                'angsuran' => $m['angsuran'] ?? 0,
-                'jasa' => $m['jasa'] ?? 0,
-                'simpanan' => $s['simpanan'] ?? 0,
-                'pinjaman' => $s['pinjaman'] ?? 0,
-            ];
-            foreach ($kolom as $k) {
-                $jumlah[$k] += $b[$k];
-            }
-            $baris[] = $b + ['anggota' => $a];
+        if ($format = $this->format($request)) {
+            return EksporLaporan::kirim(DokumenLaporan::rekap($periode, $this->tahun()), $format);
         }
 
-        return view('laporan.rekap', ['periode' => $periode, 'baris' => $baris, 'jumlah' => $jumlah]);
+        return view('laporan.rekap', ['periode' => $periode] + Keuangan::rekapBulanan($periode));
     }
 
-    public function shu()
+    public function neraca(Request $request)
     {
         $tahun = $this->tahun();
+        if ($format = $this->format($request)) {
+            return EksporLaporan::kirim(DokumenLaporan::neraca($tahun), $format);
+        }
+
+        return view('laporan.neraca', ['tahun' => $tahun, 'neraca' => Keuangan::neraca($tahun)]);
+    }
+
+    public function shu(Request $request)
+    {
+        $tahun = $this->tahun();
+        if ($format = $this->format($request)) {
+            return EksporLaporan::kirim(DokumenLaporan::shu($tahun), $format);
+        }
 
         return view('laporan.shu', [
             'tahun' => $tahun,
@@ -56,5 +44,10 @@ class LaporanController extends Controller
             'posisi' => Keuangan::ringkasan(),
             'kas' => Keuangan::kas(),
         ]);
+    }
+
+    private function format(Request $request): ?string
+    {
+        return in_array($request->query('format'), EksporLaporan::FORMAT, true) ? $request->query('format') : null;
     }
 }

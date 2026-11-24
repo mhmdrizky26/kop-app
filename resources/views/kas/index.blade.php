@@ -1,14 +1,15 @@
 @extends('layouts.app')
 
 @section('judul', 'Kas Lain-lain')
-@section('keterangan', 'Pendapatan dan biaya koperasi di luar simpanan dan pinjaman anggota. Ikut dihitung dalam SHU.')
+@section('keterangan', 'Semua uang koperasi di luar simpanan, pinjaman, jasa, dan provisi anggota. Yang bertanda "di luar SHU" (modal warung, pinjaman di luar anggota, paket munggahan, inventaris, dana sosial) tidak ikut dihitung dalam SHU. Paket munggahan cukup dicatat saat dibeli; tahun berikutnya otomatis dibebankan ke SHU.')
 
 @section('isi')
-    <div class="grid gap-6 lg:grid-cols-3">
-        <div class="space-y-6 lg:col-span-2">
+    @php $bisaUbah = auth()->user()->can('ubah-data'); @endphp
+    <div @class(['grid gap-6', 'lg:grid-cols-3' => $bisaUbah])>
+        <div @class(['space-y-6', 'lg:col-span-2' => $bisaUbah])>
             <div class="grid gap-4 sm:grid-cols-3">
-                <x-stat label="Pendapatan lain" :nilai="rupiah_singkat($pendapatan)" ikon="down-left" :catatan="'Tahun buku '.$tahun->nama" />
-                <x-stat label="Biaya usaha" :nilai="rupiah_singkat($biaya)" ikon="up-right" :catatan="'Tahun buku '.$tahun->nama" />
+                <x-stat label="Pendapatan lain" :nilai="rupiah_singkat($pendapatan)" ikon="down-left" catatan="Yang dihitung dalam SHU" />
+                <x-stat label="Biaya usaha" :nilai="rupiah_singkat($biaya)" ikon="up-right" catatan="Yang dihitung dalam SHU" />
                 <x-stat utama label="Selisih" :nilai="rupiah_singkat($pendapatan - $biaya)" ikon="wallet" />
             </div>
 
@@ -27,13 +28,18 @@
                                             @if ($k->keterangan) <span class="block text-xs text-slate-500">{{ $k->keterangan }}</span> @endif
                                         </span>
                                     </td>
-                                    <td data-label="Jenis"><span @class(['badge', 'badge-blue' => $k->tipe === 'pendapatan', 'badge-slate' => $k->tipe === 'biaya'])>{{ $k->tipe === 'pendapatan' ? 'Pendapatan' : 'Biaya' }}</span></td>
+                                    <td data-label="Jenis">
+                                        <span @class(['badge', 'badge-blue' => $k->tipe === 'pendapatan', 'badge-slate' => $k->tipe === 'biaya'])>{{ $k->tipe === 'pendapatan' ? 'Pendapatan' : 'Biaya' }}</span>
+                                        @unless ($k->masuk_shu) <span class="badge badge-amber">Di luar SHU</span> @endunless
+                                    </td>
                                     <td data-label="Jumlah" @class(['num font-medium', 'text-slate-900' => $k->tipe === 'pendapatan', 'text-slate-500' => $k->tipe === 'biaya'])>{{ $k->tipe === 'biaya' ? '−' : '+' }}{{ rupiah($k->jumlah, false) }}</td>
                                     <td class="text-right">
+                                        @can('ubah-data')
                                         <form method="POST" action="{{ route('kas.destroy', $k) }}" onsubmit="return confirm('Hapus catatan ini?')">
                                             @csrf @method('DELETE')
                                             <button class="btn btn-sm btn-danger" aria-label="Hapus catatan"><x-icon name="trash" class="size-3.5" /></button>
                                         </form>
+                                        @endcan
                                     </td>
                                 </tr>
                             @empty
@@ -45,7 +51,9 @@
             </div>
         </div>
 
-        <form method="POST" action="{{ route('kas.store') }}" class="card h-fit p-5" x-data="{ tipe: @js(old('tipe', 'biaya')), daftar: @js(\App\Models\KasLain::KATEGORI) }">
+        @if ($bisaUbah)
+        <form method="POST" action="{{ route('kas.store') }}" class="card h-fit p-5" x-data="{ tipe: @js(old('tipe', 'biaya')), kategori: @js(old('kategori')), daftar: @js(\App\Models\KasLain::KATEGORI), luarShu: @js(\App\Models\KasLain::DI_LUAR_SHU) }"
+            x-init="$watch('tipe', () => kategori = daftar[tipe][0]); kategori ??= daftar[tipe][0]">
             @csrf
             <h2 class="card-title">Tambah catatan</h2>
             <div class="mt-4 space-y-4">
@@ -55,9 +63,10 @@
                 </div>
                 <div>
                     <label for="kategori" class="label">Kategori</label>
-                    <select id="kategori" name="kategori" class="input">
-                        <template x-for="k in daftar[tipe]" :key="k"><option x-text="k" :value="k"></option></template>
+                    <select id="kategori" name="kategori" class="input" x-model="kategori">
+                        <template x-for="k in daftar[tipe]" :key="k"><option x-text="k" :value="k" :selected="k === kategori"></option></template>
                     </select>
+                    <p class="hint" x-show="luarShu.includes(kategori)" x-cloak>Perpindahan modal atau dana. Tercatat di kas, tetapi tidak dihitung dalam SHU.</p>
                 </div>
                 <div>
                     <label class="label">Jumlah</label>
@@ -75,5 +84,6 @@
             </div>
             <button class="btn btn-primary mt-5 w-full">Simpan catatan</button>
         </form>
+        @endif
     </div>
 @endsection

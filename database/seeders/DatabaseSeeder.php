@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Anggota;
+use App\Models\Inventaris;
 use App\Models\KasLain;
 use App\Models\Pinjaman;
 use App\Models\TahunBuku;
@@ -15,7 +16,9 @@ use Illuminate\Support\Str;
 
 /**
  * Data contoh untuk demo. Semua nama dan angka fiktif.
- * Login pengurus: bendahara / password. Login anggota: ID anggota, misalnya KGB001.
+ * Login pengurus: admin / password (akun dan pengaturan), bendahara / password (editor),
+ * ketua, pemeriksa1, pemeriksa2 / password (lihat saja).
+ * Login anggota: nama pengguna dari nama, misalnya rina.kartika.
  */
 class DatabaseSeeder extends Seeder
 {
@@ -38,24 +41,63 @@ class DatabaseSeeder extends Seeder
             'mulai' => $mulai->toDateString(),
             'selesai' => $mulai->copy()->addYear()->subDay()->toDateString(),
             'aktif' => true,
+            'awal_dana_sosial' => 15_000_000, 'awal_cadangan' => 32_000_000, 'awal_modal_warung' => 108_000_000,
+            'awal_pinjaman_luar' => 34_000_000, 'awal_paket_munggahan' => 21_990_000,
+            'nama_ketua' => 'Agus Setiawan, S.Pd.', 'nama_bendahara' => 'Rina Kartika, S.Pd.',
+            'nama_pemeriksa_1' => 'Yusuf Hidayat, S.Ag.', 'nama_pemeriksa_2' => 'Lestari Dewi, S.Pd.',
         ])->fresh(); // fresh() memuat nilai bawaan tarif dari basis data
 
+        // Inventaris yang dimiliki sebelum tahun buku ini dimulai, dengan umur pakai untuk penyusutan.
+        foreach ([
+            ['Laptop', 1, 'unit', '2022-07-12', 7_500_000, 4, 'baik', 'Ruang koperasi', 'Untuk pembukuan'],
+            ['Printer', 1, 'unit', '2021-03-05', 2_500_000, 4, 'rusak_ringan', 'Ruang koperasi', 'Tinta sering macet'],
+            ['Lemari arsip', 2, 'unit', '2019-08-20', 3_000_000, 8, 'baik', 'Ruang koperasi', null],
+            ['Brankas', 1, 'unit', '2018-01-15', 2_000_000, 8, 'baik', 'Ruang koperasi', 'Penyimpanan uang kas'],
+            ['Meja kerja', 2, 'unit', '2019-08-20', 1_600_000, 8, 'baik', 'Ruang koperasi', null],
+            ['Kursi kerja', 4, 'unit', '2023-08-20', 1_200_000, 4, 'baik', 'Ruang koperasi', null],
+            ['Kalkulator', 2, 'unit', '2023-02-10', 400_000, 4, 'baik', 'Ruang koperasi', null],
+            ['Rak barang warung', 3, 'unit', '2020-06-01', 2_100_000, 8, 'baik', 'Warung KGB', null],
+            ['Lemari pendingin', 1, 'unit', '2020-06-01', 4_500_000, 8, 'baik', 'Warung KGB', 'Untuk minuman warung'],
+        ] as [$namaBarang, $jumlah, $satuan, $tanggalBeli, $nilai, $umur, $kondisi, $lokasi, $catatan]) {
+            Inventaris::create([
+                'nama' => $namaBarang, 'jumlah' => $jumlah, 'satuan' => $satuan, 'tanggal_perolehan' => $tanggalBeli,
+                'nilai' => $nilai, 'umur_tahun' => $umur, 'kondisi' => $kondisi, 'lokasi' => $lokasi, 'keterangan' => $catatan,
+            ]);
+        }
+        // Barang yang rusak dan dihapuskan pada tahun buku ini, saat nilai bukunya belum habis.
+        Inventaris::create([
+            'nama' => 'Dispenser', 'jumlah' => 1, 'satuan' => 'unit', 'tanggal_perolehan' => '2023-09-01', 'nilai' => 800_000, 'umur_tahun' => 4,
+            'kondisi' => 'rusak_berat', 'lokasi' => 'Ruang koperasi', 'keterangan' => 'Rusak, tidak bisa diperbaiki',
+            'tanggal_dihapus' => $mulai->copy()->addMonths(2)->day(10)->toDateString(),
+        ]);
+
+        User::create(['name' => 'Admin', 'username' => 'admin', 'password' => 'password', 'role' => 'admin']);
         $pengurus = User::create(['name' => 'Bendahara', 'username' => 'bendahara', 'password' => 'password', 'role' => 'pengurus']);
+        // Akun lihat saja untuk ketua dan badan pemeriksa.
+        foreach (['ketua' => $tahun->nama_ketua, 'pemeriksa1' => $tahun->nama_pemeriksa_1, 'pemeriksa2' => $tahun->nama_pemeriksa_2] as $username => $nama) {
+            User::create(['name' => $nama, 'username' => $username, 'password' => 'password', 'role' => 'pengawas']);
+        }
 
         $awal = $mulai->copy()->subDay();
         $anggota = collect();
         foreach (self::NAMA as $i => $nama) {
+            // Sebagian besar potong gaji, satu dari lima campuran (manasuka disetor langsung), sisanya setor langsung.
+            $cara = match ($i % 5) {
+                0, 1, 2 => ['potong_gaji', 'potong_gaji', 'potong_gaji'],
+                3 => ['potong_gaji', 'setor', 'potong_gaji'],
+                default => ['setor', 'setor', 'setor'],
+            };
             $a = Anggota::create([
                 'nomor' => $i + 1,
                 'nama' => $nama,
                 'jabatan' => $i % 6 === 4 ? 'Tata Usaha' : 'Guru',
                 'no_hp' => '08'.mt_rand(11, 99).'-'.mt_rand(1000, 9999).'-'.mt_rand(1000, 9999),
                 'tanggal_masuk' => Carbon::create(mt_rand(2014, 2024), mt_rand(1, 12), 1)->toDateString(),
-                'potong_gaji' => $i % 5 < 3,
-                'setoran_manasuka' => [0, 0, 50000, 100000, 100000, 200000, 250000, 500000][mt_rand(0, 7)],
+                'bayar_wajib' => $cara[0], 'bayar_manasuka' => $cara[1], 'bayar_pinjaman' => $cara[2],
+                'setoran_manasuka' => $i % 5 === 3 ? 100000 : [0, 0, 50000, 100000, 100000, 200000, 250000, 500000][mt_rand(0, 7)],
             ]);
             User::create([
-                'name' => $nama, 'username' => $a->kode,
+                'name' => $nama, 'username' => User::namaPenggunaUnik($nama),
                 'password' => Str::random(40), 'role' => 'anggota', 'anggota_id' => $a->id,
             ]);
 
@@ -84,24 +126,30 @@ class DatabaseSeeder extends Seeder
             $berjalan = $bulan->equalTo($bulanIni);
 
             foreach ($anggota as $i => $a) {
-                // Bulan berjalan: potong gaji belum ditandai, sebagian penyetor langsung sudah bayar.
-                if ($berjalan && ($a->potong_gaji || $i % 2 === 0)) {
+                $hariGaji = $bulan->copy()->day(min(5, $berjalan ? now()->day : 28));
+                $hariSetor = $bulan->copy()->day(min(mt_rand(6, 20), $berjalan ? now()->day : 28));
+
+                // Bulan berjalan: potong gaji belum ditandai, sebagian penyetor langsung sudah bayar
+                // (anggota campuran jadi berstatus "dibayar sebagian").
+                if ($berjalan) {
+                    if ($i % 2 !== 0) {
+                        Keuangan::bayarSisaTagihan($a, $tahun, $bulan, 'setor', $hariSetor, $pengurus->id);
+                    }
+
                     continue;
                 }
-                $a->load('pinjamanAktif');
-                $hari = $a->potong_gaji ? 5 : mt_rand(6, 20);
-                $tanggal = $bulan->copy()->day(min($hari, $berjalan ? now()->day : 28));
-                Keuangan::bayarTagihan($a, $bulan, Keuangan::tagihan($a, $tahun, $bulan), $a->potong_gaji ? 'potong_gaji' : 'setor', $tanggal, $pengurus->id);
+                Keuangan::bayarSisaTagihan($a, $tahun, $bulan, 'potong_gaji', $hariGaji, $pengurus->id);
+                Keuangan::bayarSisaTagihan($a, $tahun, $bulan, 'setor', $hariSetor, $pengurus->id);
             }
 
             if ($berjalan) {
                 break;
             }
 
-            // Setoran tambahan dan penarikan simpanan manasuka.
+            // Setoran tambahan manasuka (lewat tagihan) dan penarikan simpanan manasuka.
             foreach (range(1, mt_rand(2, 4)) as $_) {
                 $a = $anggota[mt_rand(0, $anggota->count() - 1)];
-                $this->catat($a, $bulan->copy()->day(mt_rand(8, 26)), 'simpanan_manasuka', mt_rand(2, 30) * 100000, 'manual', 'Setoran tambahan', 'setor');
+                Keuangan::bayarTagihan($a, $tahun, $bulan, ['manasuka' => mt_rand(2, 30) * 100000], 'setor', $bulan->copy()->day(mt_rand(21, 28)), $pengurus->id);
             }
             $a = $anggota[mt_rand(0, $anggota->count() - 1)];
             $saldo = Keuangan::saldoAnggota($a->id)['manasuka'];
@@ -114,12 +162,57 @@ class DatabaseSeeder extends Seeder
                 $this->pinjaman($anggota[$idx], $bulan->copy()->day(mt_rand(10, 22)), $juta * 1_000_000, $tenor, $tahun, 'manual');
             }
 
-            KasLain::create(['tanggal' => $bulan->copy()->day(28)->toDateString(), 'tipe' => 'pendapatan', 'kategori' => 'Laba warung koperasi', 'keterangan' => 'Laba bulan '.$bulan->translatedFormat('F'), 'jumlah' => mt_rand(22, 36) * 100000]);
+            $kas = fn (int $hari, string $tipe, string $kategori, string $keterangan, int $jumlah) => KasLain::create([
+                'tanggal' => $bulan->copy()->day($hari)->toDateString(), 'tipe' => $tipe, 'kategori' => $kategori,
+                'keterangan' => $keterangan, 'jumlah' => $jumlah,
+            ]);
+
+            // Pendapatan usaha setiap bulan.
+            $kas(28, 'pendapatan', 'Laba warung KGB', 'Laba bulan '.$bulan->translatedFormat('F'), mt_rand(22, 36) * 100000);
+            $kas(25, 'pendapatan', 'Fotokopi', 'Jasa fotokopi bulan '.$bulan->translatedFormat('F'), mt_rand(15, 45) * 10000);
+            if ($n % 3 === 0) {
+                $kas(20, 'pendapatan', 'Unit jual beli', 'Penjualan seragam dan ATK', mt_rand(5, 15) * 100000);
+            }
+            if (in_array($n, [2, 5], true)) {
+                $kas(18, 'pendapatan', 'PSAS kelas 7', 'Penyediaan soal PSAS kelas 7', 1_250_000);
+                $kas(18, 'pendapatan', 'PSAS kelas 8-9', 'Penyediaan soal PSAS kelas 8 dan 9', 2_400_000);
+            }
+            if ($n === 4) {
+                $kas(12, 'pendapatan', 'Pendapatan lain-lain', 'Bunga tabungan bank', 185_000);
+            }
+
+            // Biaya usaha.
             if ($n % 2 === 0) {
-                KasLain::create(['tanggal' => $bulan->copy()->day(mt_rand(10, 20))->toDateString(), 'tipe' => 'biaya', 'kategori' => 'Konsumsi rapat', 'keterangan' => 'Rapat pengurus', 'jumlah' => mt_rand(15, 40) * 10000]);
+                $kas(mt_rand(10, 20), 'biaya', 'Konsumsi rapat', 'Rapat pengurus', mt_rand(15, 40) * 10000);
             }
             if ($n % 3 === 1) {
-                KasLain::create(['tanggal' => $bulan->copy()->day(mt_rand(3, 25))->toDateString(), 'tipe' => 'biaya', 'kategori' => 'Alat tulis dan fotokopi', 'keterangan' => 'Kertas dan tinta printer', 'jumlah' => mt_rand(10, 25) * 10000]);
+                $kas(mt_rand(3, 25), 'biaya', 'Alat tulis dan fotokopi', 'Kertas dan tinta printer', mt_rand(10, 25) * 10000);
+            }
+            match ($n) {
+                1 => $kas(14, 'biaya', 'Servis dan perawatan inventaris', 'Servis laptop', 250_000),
+                3 => $kas(11, 'biaya', 'Transportasi', 'Belanja barang warung ke pasar', 150_000),
+                4 => $kas(9, 'biaya', 'Perlengkapan kantor', 'Charger laptop', 250_000),
+                5 => $kas(2, 'biaya', 'Rekap buku kas', 'Honor rekap buku kas', 500_000),
+                default => null,
+            };
+
+            // Perpindahan modal dan dana (di luar SHU). Paket munggahan tahun lalu dibebankan ke SHU otomatis.
+            match ($n) {
+                1 => $kas(10, 'biaya', 'Modal warung KGB', 'Tambahan modal belanja warung', 5_000_000),
+                2 => $kas(16, 'biaya', 'Pinjaman di luar anggota', 'Pinjaman ke kantin sekolah', 13_000_000),
+                3 => $kas(15, 'pendapatan', 'Pengembalian modal warung KGB', 'Setoran modal dari warung', 10_000_000),
+                4 => $kas(22, 'biaya', 'Dana sosial', 'Santunan anggota sakit', 1_500_000),
+                5 => $kas(19, 'pendapatan', 'Pengembalian pinjaman di luar anggota', 'Cicilan pinjaman kantin', 4_000_000),
+                6 => $kas(7, 'biaya', 'Pinjaman paket munggahan', 'Paket munggahan anggota', 22_680_000),
+                default => null,
+            };
+            if ($n === 3) {
+                // Barang baru tahun ini, dicatat di inventaris dan di kas.
+                Inventaris::create([
+                    'nama' => 'Proyektor', 'jumlah' => 1, 'satuan' => 'unit', 'tanggal_perolehan' => $bulan->copy()->day(21)->toDateString(),
+                    'nilai' => 4_200_000, 'umur_tahun' => 4, 'kondisi' => 'baik', 'lokasi' => 'Ruang rapat', 'keterangan' => 'Untuk rapat dan RAT',
+                ]);
+                $kas(21, 'biaya', 'Pembelian inventaris', 'Proyektor (1 unit)', 4_200_000);
             }
         }
     }

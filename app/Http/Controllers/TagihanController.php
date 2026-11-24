@@ -14,35 +14,31 @@ class TagihanController extends Controller
     {
         $tahun = $this->tahun();
         $periode = $this->periode($request);
-        $bayar = Keuangan::pembayaran($periode);
-
-        $baris = Anggota::aktif()->with('pinjamanAktif')->orderBy('nomor')->get()
-            ->map(fn ($a) => [
-                'anggota' => $a,
-                'lunas' => $bayar->has($a->id),
-                'bayar' => $bayar[$a->id] ?? null,
-                'tagihan' => $bayar->has($a->id) ? null : Keuangan::tagihan($a, $tahun, $periode),
-            ]);
-
-        $belum = $baris->where('lunas', false);
+        $baris = Keuangan::daftarTagihan($tahun, $periode);
 
         return view('tagihan.index', [
             'tahun' => $tahun,
             'periode' => $periode,
             'baris' => $baris,
-            'jumlahLunas' => $baris->where('lunas', true)->count(),
-            'terkumpul' => $bayar->sum('total'),
-            'sisaTagihan' => $belum->sum(fn ($b) => $b['tagihan']['total']),
-            'belumPotongGaji' => $belum->filter(fn ($b) => $b['anggota']->potong_gaji)->count(),
+            'jumlahLunas' => $baris->where('status', 'lunas')->count(),
+            'jumlahSebagian' => $baris->where('status', 'sebagian')->count(),
+            'terkumpul' => $baris->sum(fn ($b) => $b['bayar']['total'] ?? 0),
+            'sisaTagihan' => $baris->sum(fn ($b) => $b['sisa']['total']),
+            'belumPotongGaji' => $baris->filter(fn ($b) => $this->adaSisaPotongGaji($b['anggota'], $b['sisa']))->count(),
         ]);
     }
 
-    /** Mencatat pembayaran satu anggota; jumlahnya boleh diubah dari tagihan bawaan. */
+    /**
+     * Mencatat satu kali pembayaran. Dengan "otomatis", seluruh sisa tagihan dibayar memakai cara bayar
+     * bawaan anggota; tanpa itu, jumlah tiap pos diisi pengurus (boleh sebagian).
+     */
     public function bayar(Request $request)
     {
         $data = $request->validate([
             'anggota_id' => ['required', 'exists:anggota,id'],
-            'metode' => ['required', Rule::in(array_keys(Transaksi::METODE))],
+            'otomatis' => ['boolean'],
+            'metode' => ['required_unless:otomatis,1', 'nullable', Rule::in(array_keys(Transaksi::METODE))],
+            'pokok' => ['nullable', 'integer', 'min:0'],
             'wajib' => ['nullable', 'integer', 'min:0'],
             'manasuka' => ['nullable', 'integer', 'min:0'],
             'angsuran' => ['array'],
@@ -51,42 +47,50 @@ class TagihanController extends Controller
             'jasa.*' => ['nullable', 'integer', 'min:0'],
         ]);
 
+        $tahun = $this->tahun();
         $periode = $this->periode($request);
         $anggota = Anggota::findOrFail($data['anggota_id']);
+        $userId = $request->user()->id;
 
-        $pinjaman = [];
-        foreach ($data['angsuran'] ?? [] as $id => $angsuran) {
-            $pinjaman[$id] = ['angsuran' => (int) $angsuran, 'jasa' => (int) ($data['jasa'][$id] ?? 0)];
+        if ($request->boolean('otomatis')) {
+            $tercatat = Keuangan::bayarSisaTagihan($anggota, $tahun, $periode, null, null, $userId);
+        } else {
+            $pinjaman = [];
+            foreach ($data['angsuran'] ?? [] as $id => $angsuran) {
+                $pinjaman[$id] = ['angsuran' => (int) $angsuran, 'jasa' => (int) ($data['jasa'][$id] ?? 0)];
+            }
+
+            $tercatat = Keuangan::bayarTagihan($anggota, $tahun, $periode, [
+                'pokok' => (int) ($data['pokok'] ?? 0),
+                'wajib' => (int) ($data['wajib'] ?? 0),
+                'manasuka' => (int) ($data['manasuka'] ?? 0),
+                'pinjaman' => $pinjaman,
+            ], $data['metode'], null, $userId);
         }
 
-        $tercatat = Keuangan::bayarTagihan($anggota, $periode, [
-            'wajib' => (int) ($data['wajib'] ?? 0),
-            'manasuka' => (int) ($data['manasuka'] ?? 0),
-            'pinjaman' => $pinjaman,
-        ], $data['metode'], null, $request->user()->id);
-
         return back()->with(
-            $tercatat ? 'sukses' : 'galat',
-            $tercatat ? "Pembayaran {$anggota->nama} sudah dicatat." : "{$anggota->nama} sudah tercatat membayar bulan ini."
+            $tercatat > 0 ? 'sukses' : 'galat',
+            $tercatat > 0
+                ? "Pembayaran {$anggota->nama} sudah dicatat."
+                : "Tidak ada yang dicatat. Bagian yang diisi sudah lunas untuk {$anggota->nama} bulan ini."
         );
     }
 
-    /** Menandai banyak anggota sekaligus dengan jumlah tagihan bawaan. */
+    /** Membayar sisa tagihan banyak anggota sekaligus; untuk potong gaji hanya bagian yang dipotong gaji. */
     public function bayarSemua(Request $request)
     {
         $request->validate(['kelompok' => ['required', Rule::in(['potong_gaji', 'semua'])]]);
 
         $tahun = $this->tahun();
         $periode = $this->periode($request);
-        $hanyaPotongGaji = $request->kelompok === 'potong_gaji';
+        $hanyaMetode = $request->kelompok === 'potong_gaji' ? 'potong_gaji' : null;
 
         $jumlah = 0;
-        $anggota = Anggota::aktif()->with('pinjamanAktif')
-            ->when($hanyaPotongGaji, fn ($q) => $q->where('potong_gaji', true))->get();
-
-        foreach ($anggota as $a) {
-            $metode = $a->potong_gaji ? 'potong_gaji' : 'setor';
-            if (Keuangan::bayarTagihan($a, $periode, Keuangan::tagihan($a, $tahun, $periode), $metode, null, $request->user()->id)) {
+        foreach (Keuangan::daftarTagihan($tahun, $periode) as $b) {
+            if ($b['status'] === 'lunas') {
+                continue;
+            }
+            if (Keuangan::bayarSisaTagihan($b['anggota'], $tahun, $periode, $hanyaMetode, null, $request->user()->id) > 0) {
                 $jumlah++;
             }
         }
@@ -102,6 +106,18 @@ class TagihanController extends Controller
 
         Keuangan::batalTagihan((int) $data['anggota_id'], $this->periode($request));
 
-        return back()->with('sukses', 'Pembayaran dibatalkan. Tagihan kembali berstatus belum bayar.');
+        return back()->with('sukses', 'Semua pembayaran bulan ini dibatalkan. Tagihan kembali berstatus belum bayar.');
+    }
+
+    /** True jika anggota masih punya sisa tagihan pada bagian yang dibayar lewat potong gaji. */
+    private function adaSisaPotongGaji(Anggota $anggota, array $sisa): bool
+    {
+        foreach (['pokok', 'wajib', 'manasuka', 'angsuran', 'jasa'] as $pos) {
+            if ($sisa[$pos] > 0 && $anggota->caraBayar($pos) === 'potong_gaji') {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -4,7 +4,9 @@
 @section('keterangan', 'Semua uang masuk dan keluar anggota, yang terbaru di atas.')
 
 @section('aksi')
-    <a href="{{ route('transaksi.create') }}" class="btn btn-primary"><x-icon name="plus" class="size-4" /> Catat setor / tarik</a>
+    @can('ubah-data')
+        <a href="{{ route('transaksi.create') }}" class="btn btn-primary"><x-icon name="plus" class="size-4" /> Catat penarikan</a>
+    @endcan
 @endsection
 
 @section('isi')
@@ -58,7 +60,7 @@
                             <td class="text-slate-500" data-label="Cara bayar">{{ $t->label_metode ?? '–' }}</td>
                             <td data-label="Jumlah" @class(['num font-medium', 'text-slate-900' => $t->arah === 'masuk', 'text-slate-500' => $t->arah === 'keluar'])>{{ $t->arah === 'keluar' ? '−' : '+' }}{{ rupiah($t->jumlah, false) }}</td>
                             <td class="text-right">
-                                @if ($t->bisa_dihapus)
+                                @if ($t->bisa_dihapus && auth()->user()->can('ubah-data'))
                                     <form method="POST" action="{{ route('transaksi.destroy', $t) }}" onsubmit="return confirm('Hapus transaksi ini?')">
                                         @csrf @method('DELETE')
                                         <button class="btn btn-sm btn-danger" aria-label="Hapus transaksi"><x-icon name="trash" class="size-3.5" /></button>
